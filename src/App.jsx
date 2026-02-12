@@ -140,12 +140,7 @@ export default function App() {
     .spread-card:hover { transform: translateY(-8px) scale(1.04) !important; box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 36px rgba(140,80,255,.35) !important; }
     .lang-btn:hover { background: rgba(180,140,255,0.15) !important; color: #e8d5ff !important; }
     .stat-pill:hover { border-color: rgba(200,160,255,0.4) !important; background: rgba(120,60,200,0.12) !important; }
-    @media (max-width: 768px) {
-  header span.logo-text {
-    font-size: 7px !important;
-    margin-right: 6px !important;
-  }
-}
+    @media (max-width: 768px) { header span.logo-text { display: none !important }}
   `
 
   // ── Render ──
