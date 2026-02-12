@@ -108,7 +108,7 @@ Connect repo → auto-deploys on push.
 
 ## 👤 Author
 
-Built by **Andy V.** — Portfolio project demonstrating:
+Built by **Andres_Vallarino** — Portfolio project demonstrating:
 - React component architecture
 - Bilingual i18n without external libraries
 - CSS animation and 3D transforms

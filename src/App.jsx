@@ -203,7 +203,7 @@ export default function App() {
                 <div style={{ fontSize:"15px", fontWeight:"bold", color:"#d4a8ff", fontFamily:"'Cinzel','Georgia',serif", lineHeight:1, animation:`statCount 0.4s ease` }}>
                   {val.toLocaleString()}
                 </div>
-                <div style={{ fontSize:"8px", letterSpacing:"1.5px", color:"rgba(180,140,255,0.35)", textTransform:"uppercase" }}>
+                <div style={{ fontSize:"11px", letterSpacing:"1.5px", color:"rgb(170, 126, 251)", textTransform:"uppercase" }}>
                   {label}
                 </div>
               </div>
@@ -312,8 +312,11 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize:"11px", color:"rgba(180,140,255,0.28)", letterSpacing:"3px", textTransform:"uppercase", fontFamily:"'Cinzel','Georgia',serif" }}>
+              <p style={{ fontSize:"15px", color:"rgba(180,140,255,0.28)", letterSpacing:"3px", textTransform:"uppercase", fontFamily:"'Cinzel','Georgia',serif" }}>
                 {t.deckLabel}
+                <br />
+                <br />
+                by Andres Vallarino 
               </p>
             </div>
           </div>
