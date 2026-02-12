@@ -35,7 +35,7 @@ async function saveStats(stats) {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [lang, setLang] = useState("en")
+  const [lang, setLang] = useState("es")
   const [phase, setPhase] = useState("home") // home | shuffling | drawn | reading
   const [selectedSpread, setSelectedSpread] = useState(null)
   const [dealtCards, setDealtCards] = useState([])
