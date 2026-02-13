@@ -27,6 +27,7 @@ export const TRANSLATIONS = {
     element: "Element",
     keywords: "Keywords",
     langSwitch: "ES",
+    lifePath: "Life Path",
   },
   es: {
     appName: "Arcana Mística",
@@ -55,6 +56,7 @@ export const TRANSLATIONS = {
     element: "Elemento",
     keywords: "Palabras clave",
     langSwitch: "EN",
+    lifePath: "Camino de Vida",
   },
 }
 
