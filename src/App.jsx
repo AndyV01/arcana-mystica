@@ -105,14 +105,14 @@ export default function App() {
   }
 
   const tabLabels = {
-    en: [{ id: "home", icon: "/img/magic.png", label: "Spreads" },
-    { id: "daily", icon: "🌟", label: "Daily" },
-    { id: "horoscope", icon: "♌", label: "Horoscope" },
-    { id: "diary", icon: "📖", label: "Diary" }],
-    es: [{ id: "home", icon: "/img/magic.png", label: "Tiradas" },
-    { id: "daily", icon: "🌟", label: "Hoy" },
-    { id: "horoscope", icon: "♌", label: "Horóscopo" },
-    { id: "diary", icon: "📖", label: "Diario" }],
+    en: [{ id: "home", icon: "/img/tarot02.png", label: "Spreads" },
+    { id: "daily", icon: "/img/hoy.png", label: "Daily" },
+    { id: "horoscope", icon: "/img/horoscopo.png", label: "Horoscope" },
+    { id: "diary", icon: "/img/diario03.png", label: "Diary" }],
+    es: [{ id: "home", icon: "/img/tarot02.png", label: "Tiradas" },
+    { id: "daily", icon: "/img/hoy.png", label: "Hoy" },
+    { id: "horoscope", icon: "/img/horoscopo.png", label: "Horóscopo" },
+    { id: "diary", icon: "/img/diario03.png", label: "Diario" }],
   }
 
   const CSS = `
@@ -165,7 +165,13 @@ export default function App() {
       {/* ── TOP BAR ─────────────────────────────────────── */}
       <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 18px", background: "rgba(4,1,14,.85)", backdropFilter: "blur(22px)", borderBottom: "1px solid rgba(140,80,255,.12)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "18px", filter: "drop-shadow(0 0 8px rgba(200,150,255,.6))" }}>🔮</span>
+          <span style={{ fontSize: "18px", filter: "drop-shadow(0 0 8px rgba(200,150,255,.6))" }}>
+             <img
+                  src="./img/crystal_ball.png"
+                  alt="Descripción"
+                  style={{ width: "18px", height: "18px", animation: "imageGlow 3s ease-in-out infinite" }}
+                />
+          </span>
           <span style={{ fontSize: "12px", letterSpacing: "3px", color: "rgba(200,165,255,.5)", textTransform: "uppercase", fontFamily: "'Cinzel',serif" }}>{t.appName}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
