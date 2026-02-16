@@ -100,6 +100,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
     }
     ctx.fillText(finalLine, x, currentY)
   }
+
 }
 
 async function canvasToBlob(canvas) {
@@ -169,6 +170,7 @@ export default function ShareCard({ cards, spread, lang, birthData, onClose }) {
 
     ctx.fillStyle = `hsl(${hue}, 52%, 70%)`
     ctx.font = "italic 38px 'Cormorant Garamond', serif"
+
     drawWrappedText(ctx, `“${cardMeaning}”`, 120, 630, width - 240, 54, 3)
 
     let cursorY = 850
