@@ -1,8 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CardFaceSVG } from "./CardSVG.jsx"
 import { getLifePathMeaning } from "./BirthDateModal.jsx"
 
 export default function ReadingPanel({ cards, spread, onClose, lang, t, birthData, onShare }) {
+  //agrego estados de IA 
+  const [aiReading, setAiReading] = useState(null)
+const [loadingAI, setLoadingAI] = useState(false)
+
   const [activeIdx, setActiveIdx] = useState(0)
   const item = cards[activeIdx]
   const card = item?.card
@@ -20,6 +24,39 @@ export default function ReadingPanel({ cards, spread, onClose, lang, t, birthDat
     : ""
 
   const shareLabel = lang === "es" ? "📤 Compartir lectura" : "📤 Share reading"
+
+  useEffect(() => {
+  const fetchAIReading = async () => {
+    try {
+      setLoadingAI(true)
+
+      const response = await fetch("/api/generate-reading", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ cardData: cards })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setAiReading(data.reading || data.result || JSON.stringify(data))
+      } else {
+        console.error(data.error)
+      }
+
+    } catch (error) {
+      console.error("AI fetch error:", error)
+    } finally {
+      setLoadingAI(false)
+    }
+  }
+
+  if (cards?.length) {
+    fetchAIReading()
+  }
+}, [cards])
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(4,1,14,.96)",backdropFilter:"blur(24px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"20px 16px 40px",overflowY:"auto",animation:"panelIn .5s cubic-bezier(.34,1.56,.64,1)" }}>
@@ -76,7 +113,12 @@ export default function ReadingPanel({ cards, spread, onClose, lang, t, birthDat
               <p style={{ color:`hsl(${hue},45%,56%)`,fontSize:"10px",letterSpacing:"2px",marginBottom:"18px",fontFamily:"sans-serif",textTransform:"uppercase" }}>{cardElement}</p>
               <div style={{ background:`linear-gradient(135deg,hsla(${hue},40%,14%,.45),hsla(${hue+40},30%,9%,.45))`,border:`1px solid hsla(${hue},40%,38%,.22)`,borderRadius:"14px",padding:"18px 20px",marginBottom:"14px" }}>
                 <p style={{ color:"rgba(200,175,255,.52)",fontSize:"9px",letterSpacing:"2.5px",textTransform:"uppercase",marginBottom:"8px",fontFamily:"'Cinzel',serif" }}>{isReversed?t.reversedMeaning:t.uprightMeaning}</p>
-                <p style={{ color:"#d8c8f5",fontSize:"14px",lineHeight:"1.75",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic" }}>"{cardMeaning}"</p>
+                <p style={{ color:"#d8c8f5",fontSize:"14px",lineHeight:"1.75",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic" }}>
+                   {loadingAI 
+    ? "Consultando los arcanos..." 
+    : aiReading || `"${cardMeaning}"`
+  }
+                  </p>
               </div>
               <p style={{ color:"rgba(210,185,245,.65)",fontSize:"13px",lineHeight:"1.85",fontFamily:"'Cormorant Garamond',serif",marginBottom:"16px" }}>{cardDesc}</p>
               <div style={{ display:"flex",flexWrap:"wrap",gap:"7px" }}>

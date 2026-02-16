@@ -1,7 +1,7 @@
 # 🔮 Arcana Mística — App de Tarot Bilingüe
 
 > Una app de lectura de Tarot de nivel producción, construida con **React + Vite**.  
-> Bilingüe (🇦🇷 Español / 🇺🇸 English), con animaciones 3D, mazo completo de 78 cartas, múltiples tiradas, lectura personalizada por fecha de nacimiento, carta del día, horóscopo semanal, diario de lecturas y función para compartir.
+> Bilingüe (🇦🇷 Español / 🇺🇸 English), con animaciones 3D, mazo completo de 78 cartas, múltiples tiradas, lectura personalizada por fecha de nacimiento, carta del día, horóscopo semanal, diario y generación de interpretación mediante IA orquestada.
 
 🌐 **Demo en vivo:** [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
@@ -10,12 +10,32 @@
 ## ✨ Funcionalidades
 
 ### 🎴 Core — Lectura de Tarot
+- **🤖 IA** - Generación de interpretación con IA
 - **🌐 Bilingüe** — Soporte completo EN/ES con cambio de idioma en un click
 - **🎴 Mazo de 78 cartas** — 22 Arcanos Mayores + 56 Arcanos Menores (Rider-Waite)
 - **🃏 4 Tiradas** — Carta del Día, Pasado·Presente·Futuro, Cruz Celta (10), Lectura de Amor (5)
 - **🔄 Flip 3D de cartas** — Animación cinemática CSS `preserve-3d`
 - **🔀 Animación de barajado** — Secuencia animada antes de cada lectura
 - **🔁 Cartas invertidas** — 30% de probabilidad de carta invertida con interpretaciones distintas
+
+### 🤖 Sistema de IA — Arquitectura Multi-Agente
+La generación de lecturas no es un simple prompt estático.
+
+El sistema implementa un flujo Planner → Prompt → Critic → Orchestrator, separando responsabilidades y mejorando calidad de salida.
+
+🔹 Flujo Interno
+- **Planner Agent** - Analiza la tirada seleccionada
+                    - Define estructura narrativa
+                    - Determina enfoque emocional y simbólico
+- **Prompt Agent** - Construye el prompt dinámico
+                   - Inyecta: (Cartas seleccionadas, Posición (normal/invertida), Tipo de tirada, Fecha de nacimiento, Número de vida, Signo zodiacal, Idioma )
+- **Critic Agent** - Evalúa coherencia
+                   - Ajusta tono
+                   - Refuerza profundidad simbólica
+- **Orchestrator** - Coordina agentes
+                   - Maneja contexto compartido
+                   - Devuelve interpretación final al endpoint
+
 
 ### 🌟 Personalización por Fecha de Nacimiento
 - **📅 Modal de nacimiento** — Antes de cada tirada pide fecha de nacimiento
@@ -92,22 +112,37 @@ El output queda en la carpeta `dist/` — listo para deployar.
 
 ```
 arcana-mystica/
-├── src/
-│   ├── main.jsx              # Entry point de React
-│   ├── App.jsx               # Shell principal, estado, navegación por tabs
-│   ├── data.js               # 78 cartas + traducciones bilingüe + tiradas
-│   ├── dailyContent.js       # Afirmaciones, meditaciones, horóscopo semanal
-│   ├── StarField.jsx         # Fondo animado de estrellas (Canvas API)
-│   ├── CardSVG.jsx           # Renders SVG de frente y dorso de cartas
-│   ├── TarotCard.jsx         # Carta con flip 3D y hover effects
-│   ├── BirthDateModal.jsx    # Modal de fecha de nacimiento + numerología
-│   ├── ReadingPanel.jsx      # Overlay de lectura completa
-│   ├── DailyCard.jsx         # Carta del día + afirmación + meditación
-│   ├── WeeklyHoroscope.jsx   # Horóscopo semanal por signo
-│   ├── ReadingDiary.jsx      # Historial de lecturas persistente
-│   └── ShareCard.jsx         # Tarjeta visual para compartir en redes
-├── index.html                # Entry point HTML
-├── vite.config.js            # Configuración de Vite
+├── ai/                          # Sistema interno de agentes de IA
+│   ├── agents/
+│   │   ├── critic.agent.js      # Evalúa y mejora la lectura generada
+│   │   ├── planner.agent.js     # Planifica la estructura de la interpretación
+│   │   └── prompt.agent.js      # Construye el prompt dinámico para el LLM
+│   ├── context.store.js         # Manejo de contexto compartido entre agentes
+│   └── orchestrator.js          # Orquestador principal del flujo multi-agente
+│
+├── api/
+│   └── generate-reading.js      # Serverless function (Vercel) — endpoint de IA
+│
+├── src/                         # Frontend React (Vite)
+│   ├── main.jsx                 # Entry point de React
+│   ├── App.jsx                  # Shell principal, estado, navegación por tabs
+│   ├── data.js                  # 78 cartas + traducciones bilingüe + tiradas
+│   ├── dailyContent.js          # Afirmaciones, meditaciones, horóscopo semanal
+│   ├── StarField.jsx            # Fondo animado de estrellas (Canvas API)
+│   ├── CardSVG.jsx              # SVG generativo de cartas
+│   ├── TarotCard.jsx            # Carta con flip 3D
+│   ├── BirthDateModal.jsx       # Modal de fecha de nacimiento + numerología
+│   ├── ReadingPanel.jsx         # Panel final con interpretación IA
+│   ├── DailyCard.jsx            # Carta del día
+│   ├── WeeklyHoroscope.jsx      # Horóscopo semanal
+│   ├── ReadingDiary.jsx         # Historial persistente en localStorage
+│   └── ShareCard.jsx            # Generador de tarjeta para compartir
+│
+├── public/                      # Assets estáticos
+├── .env                         # Variables de entorno (local)
+├── .env.local                   # Overrides locales
+├── index.html                   # Entry point HTML
+├── vite.config.js               # Configuración de Vite
 ├── package.json
 └── README.md
 ```
@@ -128,6 +163,7 @@ arcana-mystica/
 | **window.storage** | Fallback de storage para entornos especiales |
 | **Web Share API** | Compartir nativo en mobile |
 | **Google Fonts** | Cinzel (display) + Cormorant Garamond (body) |
+| **Claude Anthropic API** | Modelo LLM |
 
 ---
 
@@ -188,15 +224,18 @@ git push
 npm run build
 # Pushear la carpeta dist/ a tu rama gh-pages
 ```
-
-### Netlify
-Conectar repo → auto-deploya en push. Sin configuración extra.
-
 ---
 
 ## 🧠 Decisiones de Engagement
 
 | Funcionalidad | Loop de retención |
+| Separación frontend / backend |
+| Arquitectura multi-agente |
+| Orquestador desacoplado |
+| Context store compartido |
+| DEMO_MODE para control de costos |
+| API key protegida en entorno serverless |
+| Escalable a backend dedicado |
 |---|---|
 | Carta del Día | Razón para abrir la app todos los días |
 | Diario | El usuario siente que su "viaje espiritual" se registra |
@@ -211,7 +250,7 @@ Conectar repo → auto-deploya en push. Sin configuración extra.
 
 Desarrollado por **Andres_Vallarino** — Proyecto portfolio que demuestra:
 
-- Arquitectura de componentes React
+- Arquitectura de componentes React avanzada
 - i18n bilingüe sin librerías externas
 - Animaciones CSS y transforms 3D
 - Canvas API para backgrounds creativos
@@ -221,6 +260,10 @@ Desarrollado por **Andres_Vallarino** — Proyecto portfolio que demuestra:
 - Diseño responsive mobile-first
 - Integración Web Share API
 - Numerología y cálculos astrológicos
+- Diseño multi-agente para LLM
+- Orquestación de agentes
+- Integración segura con Claude (Anthropic)
+
 
 ---
 
