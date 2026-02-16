@@ -74,33 +74,65 @@ function buildGuidance(cards, spread, lang) {
   }
 }
 
-function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+function drawWrappedText(
+  ctx,
+  text,
+  x,
+  y,
+  maxWidth,
+  lineHeight,
+  maxLines = 3,
+  align = "left"
+) {
+  if (!text) return
+
+  ctx.save()
+  ctx.textAlign = align
+  ctx.textBaseline = "top"
+
   const words = text.split(" ")
-  let line = ""
-  let currentY = y
-  let lines = 0
+  const lines = []
+  let currentLine = ""
 
   for (let i = 0; i < words.length; i++) {
-    const testLine = `${line}${words[i]} `
-    if (ctx.measureText(testLine).width > maxWidth && line) {
-      ctx.fillText(line.trim(), x, currentY)
-      line = `${words[i]} `
-      currentY += lineHeight
-      lines += 1
-      if (lines >= maxLines - 1) break
+    const testLine = currentLine + words[i] + " "
+    const { width } = ctx.measureText(testLine)
+
+    if (width > maxWidth && currentLine) {
+      lines.push(currentLine.trim())
+      currentLine = words[i] + " "
+
+      if (lines.length === maxLines - 1) break
     } else {
-      line = testLine
+      currentLine = testLine
     }
   }
 
-  if (line && lines < maxLines) {
-    let finalLine = line.trim()
-    while (ctx.measureText(finalLine).width > maxWidth && finalLine.length > 3) {
-      finalLine = `${finalLine.slice(0, -2)}…`
-    }
-    ctx.fillText(finalLine, x, currentY)
+  if (lines.length < maxLines && currentLine) {
+    lines.push(currentLine.trim())
   }
 
+  // Si excede maxLines, recortamos la última con elipsis
+  if (lines.length > maxLines) {
+    lines.length = maxLines
+  }
+
+  if (lines.length === maxLines) {
+    let lastLine = lines[maxLines - 1]
+
+    while (ctx.measureText(lastLine + "…").width > maxWidth && lastLine.length > 0) {
+      lastLine = lastLine.slice(0, -1)
+    }
+
+    lines[maxLines - 1] = lastLine.trim() + "…"
+  }
+
+  // Dibujar líneas
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight)
+  })
+
+  ctx.restore()
 }
 
 async function canvasToBlob(canvas) {
@@ -171,7 +203,7 @@ export default function ShareCard({ cards, spread, lang, birthData, onClose }) {
     ctx.fillStyle = `hsl(${hue}, 52%, 70%)`
     ctx.font = "italic 38px 'Cormorant Garamond', serif"
 
-    drawWrappedText(ctx, `“${cardMeaning}”`, 120, 630, width - 240, 54, 3)
+    drawWrappedText(ctx, `“${cardMeaning}”`, width / 2, 630, width - 240, 54, 3, "center")
 
     let cursorY = 850
     const sectionX = 104
