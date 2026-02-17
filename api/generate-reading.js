@@ -10,19 +10,34 @@ const anthropic = useMock
     })
 
 async function llm(prompt) {
-  const response = await anthropic.messages.create({
-    model: "claude-3-haiku-20240307",
-    max_tokens: 400,
-    temperature: 0.7,
-    messages: [
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  })
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 400,
+      temperature: 0.7,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    })
 
-  return response.content[0].text
+    return response.content[0].text
+  } catch (error) {
+    const anthropicError = new Error(`Anthropic API error: ${error.message}`)
+    anthropicError.code = "ANTHROPIC_API_ERROR"
+    anthropicError.status = error.status ?? 502
+    throw anthropicError
+  }
+}
+
+function isAnthropicApiFailure(errorMessage = "") {
+  return (
+    errorMessage.includes("Anthropic API error") ||
+    errorMessage.includes("credit balance is too low") ||
+    errorMessage.includes("rate_limit_error")
+  )
 }
 
 function generateFallbackReading(cardData) {
@@ -62,12 +77,32 @@ export default async function handler(req, res) {
       llm
     })
 
+    if (!result.success && isAnthropicApiFailure(result.error)) {
+      return res.status(200).json({
+        success: true,
+        reading: generateFallbackReading(cardData),
+        warning: "Anthropic API unavailable. Returned fallback reading."
+      })
+    }
+
     return res.status(200).json(result)
 
   } catch (error) {
+    const hasCardData = Array.isArray(req.body?.cardData)
+
+    if (error.code === "ANTHROPIC_API_ERROR" && hasCardData) {
+      return res.status(200).json({
+        success: true,
+        reading: generateFallbackReading(req.body.cardData),
+        warning: "Anthropic API unavailable. Returned fallback reading."
+      })
+    }
+
     return res.status(200).json({
       success: true,
-      reading: generateFallbackReading(req.body.cardData)
+      reading: hasCardData
+        ? generateFallbackReading(req.body.cardData)
+        : "No fue posible generar una lectura en este momento. Intenta nuevamente."
     })
   }
 }
