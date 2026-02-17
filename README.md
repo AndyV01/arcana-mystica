@@ -162,6 +162,7 @@ arcana-mystica/
 # .env  — nunca subir al repo, agregar al .gitignore
 ANTHROPIC_API_KEY=sk-ant-...   # API key de Anthropic
 DEMO_MODE=false                 # true = sin llamadas a la API
+
 ```
 
 En Vercel: **Settings → Environment Variables** — agregar las mismas keys.
