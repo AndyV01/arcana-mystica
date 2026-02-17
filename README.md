@@ -1,110 +1,100 @@
-# 🔮 Arcana Mística — App de Tarot Bilingüe
+# 🔮 Arcana Mística — App de Tarot con IA Multi-Agente
 
-> Una app de lectura de Tarot de nivel producción, construida con **React + Vite**.  
-> Bilingüe (🇦🇷 Español / 🇺🇸 English), con animaciones 3D, mazo completo de 78 cartas, múltiples tiradas, lectura personalizada por fecha de nacimiento, carta del día, horóscopo semanal, diario y generación de interpretación mediante IA orquestada.
+> App de lectura de Tarot de nivel producción con **sistema multi-agente de IA** integrado.  
+> Construida con **React + Vite**, interpretaciones generadas por **Claude 3 Haiku** via Anthropic API  
+> en una arquitectura de 3 agentes especializados deployados como Serverless Functions en Vercel.
 
 🌐 **Demo en vivo:** [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
 ---
 
-## ✨ Funcionalidades
+## 🤖 Sistema Multi-Agente de IA
 
-### 🎴 Core — Lectura de Tarot
-- **🤖 IA** - Generación de interpretación con IA
-- **🌐 Bilingüe** — Soporte completo EN/ES con cambio de idioma en un click
-- **🎴 Mazo de 78 cartas** — 22 Arcanos Mayores + 56 Arcanos Menores (Rider-Waite)
-- **🃏 4 Tiradas** — Carta del Día, Pasado·Presente·Futuro, Cruz Celta (10), Lectura de Amor (5)
-- **🔄 Flip 3D de cartas** — Animación cinemática CSS `preserve-3d`
-- **🔀 Animación de barajado** — Secuencia animada antes de cada lectura
-- **🔁 Cartas invertidas** — 30% de probabilidad de carta invertida con interpretaciones distintas
+El corazón técnico del proyecto es una arquitectura de agentes que trabajan en pipeline para generar interpretaciones personalizadas de alta calidad.
 
-### 🤖 Sistema de IA — Arquitectura Multi-Agente
-La generación de lecturas no es un simple prompt estático.
+```
+Frontend React
+     │
+     │  POST /api/generate-reading
+     ▼
+┌─────────────────────────────────────────────────────┐
+│              Vercel Serverless Function              │
+│                generate-reading.js                  │
+│                                                     │
+│  ┌──────────────────────────────────────────────┐  │
+│  │            ORQUESTADOR PRINCIPAL             │  │
+│  │               orchestrator.js               │  │
+│  │  1. Instancia AgentContext (memoria)         │  │
+│  │  2. Llama al Planner → obtiene plan JSON     │  │
+│  │  3. Ejecuta cada paso del plan               │  │
+│  │  4. Retorna resultado final al frontend      │  │
+│  └──────────────┬───────────────────────────────┘  │
+│                 │                                   │
+│       ┌─────────┼──────────┐                       │
+│       ▼         ▼          ▼                       │
+│  ┌─────────┐ ┌────────┐ ┌─────────┐               │
+│  │ PLANNER │ │ PROMPT │ │ CRITIC  │               │
+│  │  AGENT  │ │  AGENT │ │  AGENT  │               │
+│  │         │ │        │ │         │               │
+│  │Decide   │ │Genera  │ │Evalúa   │               │
+│  │los pasos│ │el texto│ │y corrige│               │
+│  └─────────┘ └────────┘ └─────────┘               │
+│                 │                                   │
+│       ┌─────────▼──────────┐                       │
+│       │    AgentContext     │                       │
+│       │  (memoria compartida│                       │
+│       │   entre agentes)    │                       │
+│       └─────────┬───────────┘                       │
+│                 │                                   │
+│       ┌─────────▼───────────┐                      │
+│       │   Claude 3 Haiku    │                      │
+│       │   Anthropic API     │                      │
+│       └─────────────────────┘                      │
+└─────────────────────────────────────────────────────┘
+```
 
-El sistema implementa un flujo Planner → Prompt → Critic → Orchestrator, separando responsabilidades y mejorando calidad de salida.
+### Responsabilidades de cada agente
 
-🔹 Flujo Interno
-- **Planner Agent** - Analiza la tirada seleccionada
-                    - Define estructura narrativa
-                    - Determina enfoque emocional y simbólico
-- **Prompt Agent** - Construye el prompt dinámico
-                   - Inyecta: (Cartas seleccionadas, Posición (normal/invertida), Tipo de tirada, Fecha de nacimiento, Número de vida, Signo zodiacal, Idioma )
-- **Critic Agent** - Evalúa coherencia
-                   - Ajusta tono
-                   - Refuerza profundidad simbólica
-- **Orchestrator** - Coordina agentes
-                   - Maneja contexto compartido
-                   - Devuelve interpretación final al endpoint
+| Agente | Archivo | Rol |
+|---|---|---|
+| **Planner** | `ai/agents/planner.agent.js` | Recibe el objetivo y devuelve un plan JSON con los pasos a ejecutar |
+| **Prompt** | `ai/agents/prompt.agent.js` | Construye el prompt dinámico y llama al LLM para generar la interpretación |
+| **Critic** | `ai/agents/critic.agent.js` | Evalúa claridad, tono y repetición — reescribe si no aprueba |
+| **Context** | `ai/context.store.js` | Store centralizado de memoria compartida entre todos los agentes |
+| **Orchestrator** | `ai/orchestrator.js` | Coordina el flujo completo: instancia el contexto y ejecuta cada paso |
 
+### Patrones de arquitectura implementados
 
-### 🌟 Personalización por Fecha de Nacimiento
-- **📅 Modal de nacimiento** — Antes de cada tirada pide fecha de nacimiento
-- **🔢 Numerología** — Calcula el Número de Camino de Vida con su significado
-- **♌ Signo zodiacal** — Detectado automáticamente con símbolo y elemento
-- **🎴 Barajado semilla** — El mismo cumpleaños siempre genera el mismo destino
-- **🏷 Badge personal** — Visible durante el barajado, la tirada y la lectura
-
-### 🌟 Carta del Día
-- **🃏 Carta única por día** — Generada determinísticamente, cambia cada medianoche
-- **💫 Afirmación diaria** — Frase mística personalizada por idioma
-- **🧘 Meditación guiada** — Texto de meditación de 3 minutos alineado a la carta
-
-### ♌ Horóscopo Semanal
-- **12 signos** — Lectura semanal única para cada signo del zodíaco
-- **Tema de la semana** — Palabra clave que rige la energía del signo
-- **Integración con perfil** — Resalta automáticamente el signo del usuario
-
-### 📖 Diario de Lecturas
-- **Historial completo** — Todas las tiradas guardadas con fecha y cartas
-- **Vista expandible** — Click para ver las cartas de cada lectura pasada
-- **Persistencia** — Guardado en `localStorage` + `window.storage` como fallback
-- **Hasta 50 lecturas** almacenadas
-
-### 📤 Compartir Lectura
-- **Tarjeta visual** — Genera una imagen hermosa con las cartas y la interpretación
-- **Lista para Stories** — Formato optimizado para Instagram Stories y TikTok
-- **Web Share API** — Comparte directamente desde el celular, copia link como fallback
-
-### 📊 Métricas
-- **👁 Contador de visitas** — Visitas únicas acumuladas
-- **🔮 Contador de lecturas** — Total de tiradas completadas
-
-### 🎨 UI/UX
-- **⭐ Fondo de estrellas** — 220 estrellas animadas con Canvas API
-- **🧭 Navegación por tabs** — Barra inferior con 4 secciones
-- **📱 Responsive** — Funciona en móvil y escritorio
+- 🔄 **Pipeline dinámico** — el Planner decide en runtime el orden de ejecución
+- 🧠 **Memoria compartida** — `AgentContext` persiste el estado entre agentes sin acoplamiento
+- ✅ **Autocorrección** — el Critic reescribe la respuesta si detecta baja calidad
+- 🔀 **Fallback inteligente** — `DEMO_MODE=true` devuelve respuesta local sin consumir tokens API
+- 🔐 **API key segura** — `ANTHROPIC_API_KEY` solo existe en el servidor, nunca llega al browser
+- ⚡ **Serverless** — zero infrastructure, escala automáticamente con Vercel
 
 ---
 
-## 🚀 Inicio Rápido
+## ✨ Funcionalidades de la App
 
-### Requisitos
-- [Node.js](https://nodejs.org/) v18 o superior
-- npm o yarn
+### 🎴 Core — Lectura de Tarot
+- **🌐 Bilingüe** — Soporte completo EN/ES con cambio en un click
+- **🎴 78 cartas** — 22 Arcanos Mayores + 56 Arcanos Menores (Rider-Waite)
+- **🃏 4 Tiradas** — Carta Única, Pasado·Presente·Futuro, Cruz Celta (10), Amor (5)
+- **🔄 Flip 3D** — Animación CSS `preserve-3d` cinemática
+- **🔁 Cartas invertidas** — 30% de probabilidad con interpretaciones distintas
+- **🤖 Interpretación IA** — Generada por el sistema multi-agente en tiempo real
 
-### Instalación
+### 🌟 Personalización por fecha de nacimiento
+- **📅 Modal de nacimiento** — Antes de cada tirada, opcional
+- **🔢 Numerología** — Cálculo del Número de Camino de Vida con significado
+- **♌ Zodíaco** — Detección automática de signo con elemento y símbolo
+- **🎴 Barajado semilla** — Mismo cumpleaños = mismo destino (determinístico)
 
-```bash
-# Clonar el repositorio
-git clone https://github.com/AndyV01/arcana-mystica.git
-cd arcana-mystica
-
-# Instalar dependencias
-npm install
-
-# Iniciar servidor de desarrollo
-npm run dev
-```
-
-Abrí [http://localhost:5173](http://localhost:5173) en tu navegador.
-
-### Build para producción
-
-```bash
-npm run build
-```
-
-El output queda en la carpeta `dist/` — listo para deployar.
+### 📱 Contenido diario
+- **🌟 Carta del Día** — Cambia cada medianoche, con afirmación y meditación guiada
+- **♌ Horóscopo Semanal** — Texto único para los 12 signos del zodíaco
+- **📖 Diario de Lecturas** — Historial completo guardado en localStorage
+- **📤 Compartir** — Tarjeta visual lista para Instagram Stories y TikTok
 
 ---
 
@@ -112,37 +102,37 @@ El output queda en la carpeta `dist/` — listo para deployar.
 
 ```
 arcana-mystica/
-├── ai/                          # Sistema interno de agentes de IA
+├── ai/                          # Sistema de agentes de IA
 │   ├── agents/
-│   │   ├── critic.agent.js      # Evalúa y mejora la lectura generada
-│   │   ├── planner.agent.js     # Planifica la estructura de la interpretación
-│   │   └── prompt.agent.js      # Construye el prompt dinámico para el LLM
-│   ├── context.store.js         # Manejo de contexto compartido entre agentes
-│   └── orchestrator.js          # Orquestador principal del flujo multi-agente
+│   │   ├── critic.agent.js      # Evalúa y mejora la interpretación
+│   │   ├── planner.agent.js     # Planifica los pasos del pipeline
+│   │   └── prompt.agent.js      # Construye el prompt y llama al LLM
+│   ├── context.store.js         # Memoria compartida entre agentes
+│   └── orchestrator.js          # Orquestador principal del flujo
 │
 ├── api/
-│   └── generate-reading.js      # Serverless function (Vercel) — endpoint de IA
+│   └── generate-reading.js      # Serverless Function (Vercel) — endpoint IA
 │
-├── src/                         # Frontend React (Vite)
-│   ├── main.jsx                 # Entry point de React
-│   ├── App.jsx                  # Shell principal, estado, navegación por tabs
-│   ├── data.js                  # 78 cartas + traducciones bilingüe + tiradas
-│   ├── dailyContent.js          # Afirmaciones, meditaciones, horóscopo semanal
-│   ├── StarField.jsx            # Fondo animado de estrellas (Canvas API)
+├── src/                         # Frontend React + Vite
+│   ├── main.jsx
+│   ├── App.jsx                  # Shell principal, tabs, estado global
+│   ├── data.js                  # 78 cartas + traducciones + tiradas
+│   ├── dailyContent.js          # Afirmaciones, meditaciones, horóscopo
+│   ├── StarField.jsx            # Canvas API — fondo de estrellas animado
 │   ├── CardSVG.jsx              # SVG generativo de cartas
 │   ├── TarotCard.jsx            # Carta con flip 3D
-│   ├── BirthDateModal.jsx       # Modal de fecha de nacimiento + numerología
-│   ├── ReadingPanel.jsx         # Panel final con interpretación IA
+│   ├── BirthDateModal.jsx       # Modal de nacimiento + numerología
+│   ├── ReadingPanel.jsx         # Panel de interpretación con IA
 │   ├── DailyCard.jsx            # Carta del día
 │   ├── WeeklyHoroscope.jsx      # Horóscopo semanal
-│   ├── ReadingDiary.jsx         # Historial persistente en localStorage
-│   └── ShareCard.jsx            # Generador de tarjeta para compartir
+│   ├── ReadingDiary.jsx         # Historial persistente
+│   └── ShareCard.jsx            # Tarjeta para compartir en redes
 │
-├── public/                      # Assets estáticos
-├── .env                         # Variables de entorno (local)
-├── .env.local                   # Overrides locales
-├── index.html                   # Entry point HTML
-├── vite.config.js               # Configuración de Vite
+├── public/
+│   └── img/                     # Assets de iconos UI personalizados
+├── .env                         # Variables de entorno locales (no commitear)
+├── index.html
+├── vite.config.js
 ├── package.json
 └── README.md
 ```
@@ -153,117 +143,83 @@ arcana-mystica/
 
 | Tecnología | Uso |
 |---|---|
-| **React 18** | Framework UI, state management con hooks |
-| **Vite 5** | Build tool, servidor HMR ultra-rápido |
-| **CSS-in-JS** | Estilos inline + animaciones con `<style>` tag |
-| **HTML Canvas API** | Fondo animado de estrellas |
-| **SVG generativo** | Arte de cartas 100% generativo, sin imágenes externas |
-| **CSS 3D Transforms** | Flip de cartas (`preserve-3d`, `backface-visibility`) |
-| **localStorage** | Persistencia de contadores y diario |
-| **window.storage** | Fallback de storage para entornos especiales |
-| **Web Share API** | Compartir nativo en mobile |
-| **Google Fonts** | Cinzel (display) + Cormorant Garamond (body) |
-| **Claude Anthropic API** | Modelo LLM |
+| **React 18** | UI framework, hooks, estado global |
+| **Vite 5** | Build tool, HMR ultra-rápido |
+| **Anthropic API** | LLM — Claude 3 Haiku para interpretaciones |
+| **Vercel Serverless** | Endpoint `/api/generate-reading` sin servidor propio |
+| **Node.js** | Runtime del sistema de agentes |
+| **CSS-in-JS** | Estilos inline + animaciones CSS keyframes |
+| **Canvas API** | Fondo de estrellas animado (220 estrellas) |
+| **SVG generativo** | Arte de cartas 100% sin imágenes externas |
+| **localStorage** | Persistencia del diario y contadores |
+| **Google Fonts** | Cinzel + Cormorant Garamond |
 
 ---
 
-## 🎨 Decisiones de Diseño
+## ⚙️ Variables de Entorno
 
-- **Paleta de colores:** Púrpuras espaciales `#050210` → `#1c0b30` con brillos de acento
-- **Tipografía:** `Cinzel` (display, titulos) + `Cormorant Garamond` (body, cuerpo) — elegante y místico
-- **Arte de cartas:** SVG 100% generativo — hue rotado por ID de carta, sin imágenes externas necesarias
-- **Animaciones:** CSS keyframes + cubic-bezier easing para movimiento natural
-- **Sin librería UI externa** — 100% custom, demuestra dominio de CSS y React puros
-- **i18n sin librerías** — Sistema de traducción propio con objetos `{ en, es }`
-
----
-
-## 📱 Flujo de la App
-
+```bash
+# .env  — nunca subir al repo, agregar al .gitignore
+ANTHROPIC_API_KEY=sk-ant-...   # API key de Anthropic
+DEMO_MODE=false                 # true = sin llamadas a la API
 ```
-Tab 🔮 Tiradas
-  → Elegir tirada
-  → Modal fecha de nacimiento (opcional)
-  → Animación de barajado personalizada
-  → Mesa de cartas → flip una a una
-  → Panel de lectura completa
-  → Compartir en Stories
 
-Tab 🌟 Hoy
-  → Carta del día (flip automático)
-  → Afirmación diaria
-  → Meditación guiada expandible
+En Vercel: **Settings → Environment Variables** — agregar las mismas keys.
 
-Tab ♌ Horóscopo
-  → Grilla de 12 signos
-  → Texto semanal único por signo
-  → Tema + elemento + carta regente
+> Con `DEMO_MODE=true` la app funciona al 100% sin consumir tokens, usando respuestas de fallback locales. Ideal para demos de portfolio o desarrollo sin costo.
 
-Tab 📖 Diario
-  → Historial de todas las lecturas
-  → Vista expandible con cartas
-  → Borrar historial
+---
+
+## 🚀 Inicio Rápido
+
+```bash
+# Clonar
+git clone https://github.com/AndyV01/arcana-mystica.git
+cd arcana-mystica
+
+# Instalar dependencias
+npm install
+
+# Configurar entorno
+# Crear .env con ANTHROPIC_API_KEY o DEMO_MODE=true
+
+# Desarrollo
+npm run dev
+# → http://localhost:5173
+
+# Build producción
+npm run build
 ```
 
 ---
 
-## 📦 Deployment
-
-### Vercel (recomendado)
-Conectar repo → auto-deploya en cada push. Vite detectado automáticamente.
+## 📦 Deploy en Vercel
 
 ```bash
 git add .
-git commit -m "descripción del cambio"
+git commit -m "feat: descripción del cambio"
 git push
-# Vercel despliega en ~60 segundos ✅
+# Vercel auto-deploya en ~60 segundos ✅
 ```
 
-### GitHub Pages
-```bash
-npm run build
-# Pushear la carpeta dist/ a tu rama gh-pages
-```
----
-
-## 🧠 Decisiones de Engagement
-
-| Funcionalidad | Loop de retención |
-| Separación frontend / backend |
-| Arquitectura multi-agente |
-| Orquestador desacoplado |
-| Context store compartido |
-| DEMO_MODE para control de costos |
-| API key protegida en entorno serverless |
-| Escalable a backend dedicado |
-|---|---|
-| Carta del Día | Razón para abrir la app todos los días |
-| Diario | El usuario siente que su "viaje espiritual" se registra |
-| Compartir | Genera contenido viral orgánico en Instagram/TikTok |
-| Horóscopo | Atrae usuarios del nicho astrología, no solo tarot |
-| Meditación | Aumenta el tiempo en app 3–5 minutos por sesión |
-| Fecha de nacimiento | Personalización = mayor attachment emocional |
+Configurar en Vercel → Settings → Environment Variables:
+- `ANTHROPIC_API_KEY` → tu clave de Anthropic
+- `DEMO_MODE` → `false` en producción, `true` para demo
 
 ---
 
 ## 👤 Autor
 
-Desarrollado por **Andres_Vallarino** — Proyecto portfolio que demuestra:
+Desarrollado por **Andres Vallarino**  
+[Portfolio](https://portfolio-nextjs-nine-lac.vercel.app/) · [GitHub](https://github.com/AndyV01)
 
-- Arquitectura de componentes React avanzada
+Este proyecto demuestra:
+- Diseño e implementación de arquitectura multi-agente de IA desde cero
+- Integración real de Anthropic API (Claude 3 Haiku) en producción
+- Serverless Functions en Vercel con manejo seguro de API keys
+- React con animaciones 3D, Canvas API y SVG generativo
 - i18n bilingüe sin librerías externas
-- Animaciones CSS y transforms 3D
-- Canvas API para backgrounds creativos
-- Arte SVG generativo
-- State management con hooks
-- Persistencia de datos con localStorage
-- Diseño responsive mobile-first
-- Integración Web Share API
-- Numerología y cálculos astrológicos
-- Diseño multi-agente para LLM
-- Orquestación de agentes
-- Integración segura con Claude (Anthropic)
-
+- Persistencia con localStorage y state management con hooks
 
 ---
 
