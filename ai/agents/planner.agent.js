@@ -2,10 +2,10 @@
 
 export async function plannerAgent({ objective, context, llm }) {
   const prompt = `
-You are a planning agent.
+Eres un agente de planificación.
 
-Break this objective into structured steps.
-Return ONLY valid JSON:
+Descompón este objetivo en pasos estructurados.
+Devuelve SOLO JSON válido:
 
 {
   "steps": [
@@ -14,7 +14,7 @@ Return ONLY valid JSON:
   ]
 }
 
-Objective:
+Objetivo:
 ${objective}
 `
 
