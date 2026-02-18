@@ -4,22 +4,22 @@ export async function criticAgent({ context, llm }) {
   const text = context.get("generatedText")
 
   const prompt = `
-You are a quality control agent.
+Eres un agente de control de calidad.
 
-Review this tarot interpretation.
+Revisa esta interpretación de tarot.
 
-Check:
-- clarity
-- repetition
-- mystical tone
-- length appropriateness
+Verifica:
+- claridad
+- repetición
+- tono místico
+- adecuación de la longitud
 
-If it is good, return:
+Si está bien, devuelve:
 APPROVED
 
-If it needs improvement, return the improved version only.
+Si necesita mejoras, devuelve solo la versión mejorada.
 
-Text:
+Texto:
 ${text}
 `
 
