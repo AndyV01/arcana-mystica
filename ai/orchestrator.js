@@ -10,7 +10,7 @@ export async function runMultiAgentSystem({
   cardData,
   llm
 }) {
-  // Centralized shared state used by all agents during the full orchestration run.
+  // Estado compartido centralizado usado por todos los agentes durante toda la ejecución de la orquestación.
   const context = new AgentContext({
     objective,
     cardData,
@@ -18,39 +18,39 @@ export async function runMultiAgentSystem({
   })
 
   try {
-    // 1) Generate a structured execution plan based on the objective and current context.
+    // 1) Generar un plan de ejecución estructurado según el objetivo y el contexto actual.
     const plan = await plannerAgent({ objective, context, llm })
     context.update("plan", plan)
 
-    // 2) Execute each planned step in order, routing work to the agent declared by the planner.
+    // 2) Ejecutar cada paso planificado en orden, dirigiendo el trabajo al agente declarado por el planificador.
     for (const step of plan.steps) {
       switch (step.agent) {
         case "prompt":
-          // Produces or refines prompt outputs using the available card data.
+          // Produce o refina salidas de prompts usando los datos de cartas disponibles.
           await promptAgent({ cardData, context, llm })
           context.get("logs").push("Prompt agent executed")
           break
 
         case "critic":
-          // Reviews previous outputs and records feedback for quality/control.
+          // Revisa salidas previas y registra retroalimentación para calidad/control.
           await criticAgent({ context, llm })
           context.get("logs").push("Critic agent executed")
           break
 
         default:
-          // Preserve observability when the planner emits an unsupported agent type.
+          // Preserva la observabilidad cuando el planificador emite un tipo de agente no compatible.
           context.get("logs").push(`Unknown agent: ${step.agent}`)
       }
     }
 
-    // Return the full context snapshot so callers can inspect outputs, plan, and logs.
+    // Devuelve la instantánea completa del contexto para que quienes llaman puedan inspeccionar salidas, plan y logs.
     return {
       success: true,
       data: context.getAll()
     }
 
   } catch (error) {
-    // Surface runtime failures in a normalized response shape.
+    // Expone fallos de ejecución en una forma de respuesta normalizada.
     return {
       success: false,
       error: error.message
