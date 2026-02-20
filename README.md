@@ -18,38 +18,38 @@ Frontend React
      │  POST /api/generate-reading
      ▼
 ┌─────────────────────────────────────────────────────┐
-│              Vercel Serverless Function              │
+│              Vercel Serverless Function             │
 │                generate-reading.js                  │
 │                                                     │
-│  ┌──────────────────────────────────────────────┐  │
-│  │            ORQUESTADOR PRINCIPAL             │  │
-│  │               orchestrator.js               │  │
-│  │  1. Instancia AgentContext (memoria)         │  │
-│  │  2. Llama al Planner → obtiene plan JSON     │  │
-│  │  3. Ejecuta cada paso del plan               │  │
-│  │  4. Retorna resultado final al frontend      │  │
-│  └──────────────┬───────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐   │
+│  │            ORQUESTADOR PRINCIPAL             │   │
+│  │               orchestrator.js                │   │
+│  │  1. Instancia AgentContext (memoria)         │   │
+│  │  2. Llama al Planner → obtiene plan JSON     │   │
+│  │  3. Ejecuta cada paso del plan               │   │
+│  │  4. Retorna resultado final al frontend      │   │
+│  └──────────────┬───────────────────────────────┘   │
 │                 │                                   │
-│       ┌─────────┼──────────┐                       │
-│       ▼         ▼          ▼                       │
-│  ┌─────────┐ ┌────────┐ ┌─────────┐               │
-│  │ PLANNER │ │ PROMPT │ │ CRITIC  │               │
-│  │  AGENT  │ │  AGENT │ │  AGENT  │               │
-│  │         │ │        │ │         │               │
-│  │Decide   │ │Genera  │ │Evalúa   │               │
-│  │los pasos│ │el texto│ │y corrige│               │
-│  └─────────┘ └────────┘ └─────────┘               │
+│       ┌─────────┼──────────┐                        │
+│       ▼         ▼          ▼                        │
+│  ┌─────────┐ ┌────────┐ ┌─────────┐                 │
+│  │ PLANNER │ │ PROMPT │ │ CRITIC  │                 │
+│  │  AGENT  │ │  AGENT │ │  AGENT  │                 │
+│  │         │ │        │ │         │                 │
+│  │Decide   │ │Genera  │ │Evalúa   │                 │
+│  │los pasos│ │el texto│ │y corrige│                 │
+│  └─────────┘ └────────┘ └─────────┘                 │
 │                 │                                   │
-│       ┌─────────▼──────────┐                       │
-│       │    AgentContext     │                       │
-│       │  (memoria compartida│                       │
-│       │   entre agentes)    │                       │
-│       └─────────┬───────────┘                       │
+│       ┌─────────▼──────────┐                        │
+│       │    AgentContext    │                        │
+│       │ (memoria compartida│                        │
+│       │   entre agentes)   │                        │
+│       └─────────┬──────────┘                        │
 │                 │                                   │
-│       ┌─────────▼───────────┐                      │
-│       │   Claude 3 Haiku    │                      │
-│       │   Anthropic API     │                      │
-│       └─────────────────────┘                      │
+│       ┌─────────▼───────────┐                       │
+│       │   Claude 3 Haiku    │                       │
+│       │   Anthropic API     │                       │
+│       └─────────────────────┘                       │
 └─────────────────────────────────────────────────────┘
 ```
 
