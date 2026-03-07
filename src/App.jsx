@@ -126,12 +126,12 @@ export default function App() {
     { id: "daily", icon: "/img/hoy.png", label: "Daily" },
     { id: "horoscope", icon: "/img/horoscopo.png", label: "Horoscope" },
     { id: "diary", icon: "/img/diario03.png", label: "Diary" },
-    { id: "profile", icon: "✦", label: "Profile" }],
+    { id: "profile", icon: "/img/user.png", label: "Profile" }],
     es: [{ id: "home", icon: "/img/tarot02.png", label: "Tiradas" },
     { id: "daily", icon: "/img/hoy.png", label: "Hoy" },
     { id: "horoscope", icon: "/img/horoscopo.png", label: "Horóscopo" },
     { id: "diary", icon: "/img/diario03.png", label: "Diario" },
-    { id: "profile", icon: "✦", label: "Perfil" }],
+    { id: "profile", icon: "/img/user.png", label: "Perfil" }],
   }
 
   const CSS = `
