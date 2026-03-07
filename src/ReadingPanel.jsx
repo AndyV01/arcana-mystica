@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react"
 import { CardFaceSVG } from "./CardSVG.jsx"
 import { getLifePathMeaning } from "./BirthDateModal.jsx"
+import { loadProfile, saveProfile } from "./profile.store.js"
 
 export default function ReadingPanel({ cards, spread, onClose, lang, t, birthData, onShare }) {
   //agrego estados de IA 
   const [aiReading, setAiReading] = useState(null)
-const [loadingAI, setLoadingAI] = useState(false)
+  const [loadingAI, setLoadingAI] = useState(false)
+  const [profileSummary, setProfileSummary] = useState("")
+  const [nextAction, setNextAction] = useState(null)
 
   const [activeIdx, setActiveIdx] = useState(0)
   const item = cards[activeIdx]
@@ -26,37 +29,50 @@ const [loadingAI, setLoadingAI] = useState(false)
   const shareLabel = lang === "es" ? "📤 Compartir lectura" : "📤 Share reading"
 
   useEffect(() => {
-  const fetchAIReading = async () => {
-    try {
-      setLoadingAI(true)
+    const fetchAIReading = async () => {
+      try {
+        setLoadingAI(true)
+        const storedProfile = await loadProfile()
 
-      const response = await fetch("/api/generate-reading", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ cardData: cards })
-      })
+        const response = await fetch("/api/generate-reading", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            cardData: cards,
+            userProfile: storedProfile,
+            spread,
+            birthData,
+            lang
+          })
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok) {
-        setAiReading(data.reading || data.result || JSON.stringify(data))
-      } else {
-        console.error(data.error)
+        if (response.ok) {
+          setAiReading(data.reading || JSON.stringify(data))
+
+          if (data.profile) {
+            setProfileSummary(data.profile.profileSummary || "")
+            await saveProfile(data.profile)
+          }
+
+          setNextAction(data.nextAction || data.profile?.nextAction || null)
+        } else {
+          console.error(data.error)
+        }
+      } catch (error) {
+        console.error("AI fetch error:", error)
+      } finally {
+        setLoadingAI(false)
       }
-
-    } catch (error) {
-      console.error("AI fetch error:", error)
-    } finally {
-      setLoadingAI(false)
     }
-  }
 
-  if (cards?.length) {
-    fetchAIReading()
-  }
-}, [cards])
+    if (cards?.length) {
+      fetchAIReading()
+    }
+  }, [birthData, cards, lang, spread])
 
   return (
     <div style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(4,1,14,.96)",backdropFilter:"blur(24px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"20px 16px 40px",overflowY:"auto",animation:"panelIn .5s cubic-bezier(.34,1.56,.64,1)" }}>
@@ -85,6 +101,11 @@ const [loadingAI, setLoadingAI] = useState(false)
 
         <p style={{ fontSize:"10px",letterSpacing:"5px",color:"rgba(180,140,255,.42)",textTransform:"uppercase",marginBottom:"8px",fontFamily:"'Cinzel',serif" }}>{t.yourReading}</p>
         <h2 style={{ fontSize:"clamp(18px,4vw,28px)",fontFamily:"'Cinzel',serif",fontWeight:400,color:"#e8d5ff",marginBottom:"22px",letterSpacing:"2px" }}>{spread.name}</h2>
+        {profileSummary && (
+          <p style={{ maxWidth:"620px",margin:"0 auto 18px",fontSize:"12px",lineHeight:"1.6",color:"rgba(205,180,245,.72)",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic" }}>
+            {profileSummary}
+          </p>
+        )}
 
         {/* Tabs */}
         {cards.length > 1 && (
@@ -121,6 +142,19 @@ const [loadingAI, setLoadingAI] = useState(false)
                   </p>
               </div>
               <p style={{ color:"rgba(210,185,245,.65)",fontSize:"13px",lineHeight:"1.85",fontFamily:"'Cormorant Garamond',serif",marginBottom:"16px" }}>{cardDesc}</p>
+              {nextAction && (
+                <div style={{ marginBottom:"16px",padding:"14px 16px",background:"linear-gradient(135deg,rgba(70,35,120,.32),rgba(26,12,52,.42))",border:"1px solid rgba(180,140,255,.18)",borderRadius:"14px" }}>
+                  <p style={{ color:"rgba(220,190,255,.88)",fontSize:"10px",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"6px",fontFamily:"'Cinzel',serif" }}>
+                    {nextAction.title}
+                  </p>
+                  <p style={{ color:"rgba(215,192,245,.72)",fontSize:"13px",lineHeight:"1.65",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",marginBottom:"8px" }}>
+                    {nextAction.message}
+                  </p>
+                  <p style={{ color:`hsl(${hue},55%,62%)`,fontSize:"10px",letterSpacing:"1.5px",fontFamily:"'Cinzel',serif" }}>
+                    {nextAction.cta}
+                  </p>
+                </div>
+              )}
               <div style={{ display:"flex",flexWrap:"wrap",gap:"7px" }}>
                 {cardKeywords.split(", ").map((kw,i) => <span key={i} style={{ padding:"3px 12px",background:`hsla(${hue},40%,18%,.45)`,border:`1px solid hsla(${hue},40%,38%,.22)`,borderRadius:"20px",fontSize:"9px",color:`hsl(${hue},45%,66%)`,fontFamily:"sans-serif" }}>{kw}</span>)}
               </div>

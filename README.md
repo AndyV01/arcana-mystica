@@ -1,96 +1,115 @@
-﻿# Arcana Mística — App de Tarot con IA Multi-Agente
+# Arcana Mistica - Tarot App with Multi-Agent AI
 
-> App de lectura de Tarot de nivel producción con sistema multi-agente de IA.
-> Construida con React + Vite, interpretaciones generadas por GPT-5.4 vía OpenAI API,
-> y endpoint serverless en Vercel.
+> Tarot reading app built with React + Vite.
+> Readings are generated with OpenAI `gpt-5.4` through a multi-agent pipeline,
+> with local profile memory, daily personalized draws, and a serverless API.
 
-Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
+Live demo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
 ---
 
-## Sistema Multi-Agente de IA
+## Overview
 
-El núcleo técnico del proyecto es una arquitectura de agentes que trabajan en pipeline para generar interpretaciones personalizadas.
+Arcana Mistica combines a visual tarot experience with a lightweight multi-agent backend.
+The app supports bilingual readings, profile persistence, birthdate-based personalization,
+and recurring engagement loops such as diary history, daily content, and next-action suggestions.
+
+---
+
+## AI Architecture
 
 ```text
-Frontend React
+React frontend
    |
    | POST /api/generate-reading
    v
-Vercel Serverless Function (api/generate-reading.js)
+Serverless function (api/generate-reading.js)
    |
    +--> Orchestrator (ai/orchestrator.js)
-           1) Crea AgentContext
-           2) Planner define plan
-           3) Ejecuta Prompt/Critic
-           4) Devuelve resultado
+           1) Memory agent prepares profile context
+           2) Planner agent defines execution order
+           3) Prompt agent generates the tarot interpretation
+           4) Critic agent revises tone and clarity
+           5) Memory agent finalizes the user profile
+           6) Hook agent suggests the next best action
    |
-   +--> LLM: OpenAI GPT-5.4
+   +--> OpenAI Responses API (gpt-5.4)
 ```
 
-### Responsabilidades de cada agente
+### Agent responsibilities
 
-| Agente | Archivo | Rol |
+| Agent | File | Role |
 |---|---|---|
-| Planner | `ai/agents/planner.agent.js` | Recibe el objetivo y devuelve un plan JSON con pasos de ejecución |
-| Prompt | `ai/agents/prompt.agent.js` | Construye el prompt dinámico y llama al LLM |
-| Critic | `ai/agents/critic.agent.js` | Evalúa claridad/tono y reescribe si la salida no cumple |
-| Context | `ai/context.store.js` | Memoria compartida entre agentes |
-| Orchestrator | `ai/orchestrator.js` | Coordina el flujo completo |
+| Memory | `ai/agents/memory.agent.js` | Builds and updates a persistent user profile from recurring cards, spreads, themes, and birth data |
+| Planner | `ai/agents/planner.agent.js` | Returns the execution plan for the reading pipeline |
+| Prompt | `ai/agents/prompt.agent.js` | Generates the tarot reading using cards, spread, birth data, and profile context |
+| Critic | `ai/agents/critic.agent.js` | Revises clarity, tone, repetition, and reading length |
+| Hook | `ai/agents/hook.agent.js` | Creates the next suggested action to bring the user back into the app |
+| Context | `ai/context.store.js` | Shared state store used by all agents |
+| Orchestrator | `ai/orchestrator.js` | Coordinates the full multi-agent workflow |
 
-### Patrones implementados
+### Implemented patterns
 
-- Pipeline dinámico: el Planner decide el orden de ejecución en runtime.
-- Memoria compartida: `AgentContext` persiste estado entre agentes.
-- Autocorrección: el Critic revisa y mejora la respuesta.
-- Fallback inteligente: con `DEMO_MODE=true` responde local sin consumir API.
-- API key segura: `OPENAI_API_KEY` solo existe en servidor.
-- Serverless: despliegue simple y escalable con Vercel.
-
----
-
-## Funcionalidades
-
-### Core Tarot
-
-- Soporte bilingüe EN/ES.
-- 78 cartas (22 arcanos mayores + 56 menores).
-- 4 tiradas: única, pasado/presente/futuro, cruz celta, amor.
-- Cartas invertidas con significado alterno.
-- Interpretación IA en tiempo real.
-
-### Personalización por fecha de nacimiento
-
-- Modal opcional de nacimiento.
-- Numerología (camino de vida).
-- Signo zodiacal automático.
-- Barajado semilla para reproducibilidad.
-
-### Contenido diario
-
-- Carta del día.
-- Horóscopo semanal.
-- Diario de lecturas en `localStorage`.
-- Tarjeta para compartir en redes.
+- Dynamic pipeline: the planner can define the execution order at runtime.
+- Shared memory: `AgentContext` carries state through the full orchestration.
+- Persistent profile: the frontend stores the evolving user profile locally.
+- Personalized retention: the hook agent recommends the next spread or action.
+- Graceful fallback: `DEMO_MODE=true` bypasses OpenAI and returns a local reading.
+- Secure secrets: `OPENAI_API_KEY` exists only on the server side.
 
 ---
 
-## Estructura del proyecto
+## Product Features
+
+### Tarot core
+
+- 78-card bilingual tarot deck.
+- 4 spreads: single card, past/present/future, Celtic cross, love reading.
+- Upright and reversed interpretations.
+- Real-time AI interpretation from the multi-agent backend.
+
+### Birthdate personalization
+
+- Optional birthdate modal before a reading.
+- Zodiac sign and life path calculation.
+- Personalized seeded draw logic.
+- Same birthdate + same day = same reading.
+- Same birthdate + different day = refreshed reading.
+
+### Retention features
+
+- Persistent profile memory stored locally.
+- Profile view with recurring cards, favorite spreads, active themes, and next action.
+- Reading diary in `localStorage`.
+- Daily card and weekly horoscope.
+- Shareable reading card for social posting.
+
+---
+
+## Project Structure
 
 ```text
 arcana-mystica/
 ├── ai/
 │   ├── agents/
 │   │   ├── critic.agent.js
+│   │   ├── hook.agent.js
+│   │   ├── memory.agent.js
 │   │   ├── planner.agent.js
 │   │   └── prompt.agent.js
 │   ├── context.store.js
-│   └── orchestrator.js
+│   ├── orchestrator.js
+│   └── profile.utils.js
 ├── api/
 │   └── generate-reading.js
 ├── src/
 │   ├── App.jsx
+│   ├── BirthDateModal.jsx
+│   ├── ProfileInsights.jsx
+│   ├── ReadingDiary.jsx
 │   ├── ReadingPanel.jsx
+│   ├── WeeklyHoroscope.jsx
+│   ├── profile.store.js
 │   └── ...
 ├── public/
 ├── .env
@@ -104,85 +123,94 @@ arcana-mystica/
 
 ## Stack
 
-| Tecnología | Uso |
+| Technology | Usage |
 |---|---|
-| React 18 | UI y estado |
-| Vite 5 | Dev server y build |
-| OpenAI API | LLM (GPT-5.4) |
-| Vercel Serverless | Endpoint `/api/generate-reading` |
-| Node.js | Runtime de agentes |
-| localStorage | Persistencia local |
+| React 18 | UI and client state |
+| Vite 5 | Dev server and build pipeline |
+| OpenAI API | LLM generation via `gpt-5.4` |
+| Vercel Serverless | API route deployment |
+| Node.js | Runtime for agents and API layer |
+| localStorage | Persistent diary and user profile |
 
 ---
 
-## Variables de entorno
+## Environment Variables
 
 ```bash
-# .env.local (recomendado para secrets locales, no commitear)
+# .env.local
 OPENAI_API_KEY=sk-proj-...
 DEMO_MODE=false
 ```
 
 ```bash
-# .env (opcional, sin secrets)
+# .env
 DEMO_MODE=false
 ```
 
-En Vercel (`Settings -> Environment Variables`):
+In Vercel (`Settings -> Environment Variables`):
 
 - `OPENAI_API_KEY`
 - `DEMO_MODE`
 
-Notas:
-- En desarrollo local (`npm run dev`), Vite expone el endpoint `/api/generate-reading` mediante middleware en `vite.config.js`.
-- Con `DEMO_MODE=true`, la app usa fallback local y no llama a OpenAI.
+Notes:
+
+- During local development, Vite exposes `/api/generate-reading` through middleware in `vite.config.js`.
+- With `DEMO_MODE=true`, the app skips OpenAI and returns fallback readings.
 
 ---
 
-## Inicio rápido
+## Local Development
 
 ```bash
 git clone https://github.com/AndyV01/arcana-mystica.git
 cd arcana-mystica
 npm install
+npm run dev
 ```
 
-Configura `/.env.local` y luego:
+Local app:
 
 ```bash
-npm run dev
-# http://localhost:5173
+http://localhost:5173
+```
 
+Production build:
+
+```bash
 npm run build
 ```
 
 ---
 
-## Deploy en Vercel
+## Deployment
 
 ```bash
 git add .
-git commit -m "feat: update docs + openai model"
+git commit -m "feat: update profile memory and retention flow"
 git push
 ```
 
-Configurar variables en Vercel:
+Configure in Vercel:
 
-- `OPENAI_API_KEY`: tu clave de OpenAI
-- `DEMO_MODE`: `false` en producción (`true` solo para demo)
+- `OPENAI_API_KEY`: your OpenAI secret key
+- `DEMO_MODE`: `false` in production
 
 ---
 
-## Autor
+## What This Project Demonstrates
 
-Desarrollado por **Andres Vallarino**
+- Multi-agent AI orchestration applied to a real product.
+- OpenAI integration with `gpt-5.4`.
+- Persistent profile memory driven by reading history.
+- Retention-oriented product design using a hook agent and suggested next actions.
+- Daily personalized tarot logic based on birthdate plus current day.
+- React frontend with animated tarot UI, diary, and share flow.
+
+---
+
+## Author
+
+Developed by **Andres Vallarino**
 
 - [Portfolio](https://portfolio-nextjs-nine-lac.vercel.app/)
 - [GitHub](https://github.com/AndyV01)
-
-Este proyecto demuestra:
-
-- Arquitectura multi-agente de IA aplicada a un producto real.
-- Integración de OpenAI API (GPT-5.4).
-- Serverless Functions en Vercel con manejo seguro de secrets.
-- Frontend React con UI interactiva y persistencia local.

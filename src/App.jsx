@@ -7,10 +7,20 @@ import DailyCard from "./DailyCard.jsx"
 import ReadingDiary, { addDiaryEntry } from "./ReadingDiary.jsx"
 import WeeklyHoroscope from "./WeeklyHoroscope.jsx"
 import ShareCard from "./ShareCard.jsx"
+import ProfileInsights from "./ProfileInsights.jsx"
 import { CardBackSVG } from "./CardSVG.jsx"
 import { TRANSLATIONS, SPREADS, MAJOR_ARCANA, generateMinorArcana } from "./data.js"
 
 const ALL_CARDS = [...MAJOR_ARCANA, ...generateMinorArcana()]
+
+function getDailyReadingSeed(baseSeed) {
+  const now = new Date()
+  const daySeed = Number(
+    `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
+  )
+
+  return (baseSeed * 31 + daySeed) % 2147483647
+}
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 const STATS_KEY = "arcana-mystica-stats-v2"
@@ -70,16 +80,23 @@ export default function App() {
   }, [phase])
 
   const dealCards = (spread, bd) => {
-    const pool = bd?.seed ? seededShuffle(ALL_CARDS, bd.seed) : [...ALL_CARDS].sort(() => Math.random() - 0.5)
+    const readingSeed = bd?.seed ? getDailyReadingSeed(bd.seed) : null
+    const pool = readingSeed ? seededShuffle(ALL_CARDS, readingSeed) : [...ALL_CARDS].sort(() => Math.random() - 0.5)
     const selected = pool.slice(0, spread.count).map((c, i) => ({
       card: c,
-      reversed: bd?.seed ? ((bd.seed + i * 137) % 10) > 7 : Math.random() > 0.72,
+      reversed: readingSeed ? ((readingSeed + i * 137) % 10) > 7 : Math.random() > 0.72,
     }))
     setDealtCards(selected); setRevealedIndexes([])
     setTimeout(() => setPhase("drawn"), 150)
   }
 
   const handleSpreadSelect = (spread) => { setSelectedSpread(spread); setPhase("birthdate") }
+  const handleSuggestedSpread = (spreadId) => {
+    const suggestedSpread = spreads.find(spread => spread.id === spreadId)
+    if (!suggestedSpread) return
+    setTab("home")
+    handleSpreadSelect(suggestedSpread)
+  }
   const handleBirthConfirm = (bd) => { setBirthData(bd); setPhase("shuffling"); setShuffleTick(0) }
   const handleBirthSkip = () => { setBirthData(null); setPhase("shuffling"); setShuffleTick(0) }
 
@@ -108,11 +125,13 @@ export default function App() {
     en: [{ id: "home", icon: "/img/tarot02.png", label: "Spreads" },
     { id: "daily", icon: "/img/hoy.png", label: "Daily" },
     { id: "horoscope", icon: "/img/horoscopo.png", label: "Horoscope" },
-    { id: "diary", icon: "/img/diario03.png", label: "Diary" }],
+    { id: "diary", icon: "/img/diario03.png", label: "Diary" },
+    { id: "profile", icon: "✦", label: "Profile" }],
     es: [{ id: "home", icon: "/img/tarot02.png", label: "Tiradas" },
     { id: "daily", icon: "/img/hoy.png", label: "Hoy" },
     { id: "horoscope", icon: "/img/horoscopo.png", label: "Horóscopo" },
-    { id: "diary", icon: "/img/diario03.png", label: "Diario" }],
+    { id: "diary", icon: "/img/diario03.png", label: "Diario" },
+    { id: "profile", icon: "✦", label: "Perfil" }],
   }
 
   const CSS = `
@@ -267,6 +286,7 @@ export default function App() {
 
         {/* ══ DIARY TAB ══════════════════════════════════ */}
         {tab === "diary" && <ReadingDiary lang={lang} />}
+        {tab === "profile" && <ProfileInsights lang={lang} onStartSuggested={handleSuggestedSpread} />}
 
         {/* ══ SHUFFLING ══════════════════════════════════ */}
         {phase === "shuffling" && (

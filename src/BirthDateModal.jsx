@@ -72,6 +72,7 @@ const T = {
   en: {
     title:        "Before We Begin",
     subtitle:     "The stars need to know when you were born to guide your reading",
+    dailyNote:    "Your personalized reading stays stable for today and renews with a new card tomorrow.",
     dayLabel:     "Day",
     monthLabel:   "Month",
     yearLabel:    "Year",
@@ -93,6 +94,7 @@ const T = {
   es: {
     title:        "Antes de Comenzar",
     subtitle:     "Las estrellas necesitan saber cuándo naciste para guiar tu lectura",
+    dailyNote:    "Tu lectura personalizada se mantiene igual durante hoy y se renueva con otra carta mañana.",
     dayLabel:     "Día",
     monthLabel:   "Mes",
     yearLabel:    "Año",
@@ -207,6 +209,9 @@ export default function BirthDateModal({ lang, spreadName, onConfirm, onSkip }) 
         </h2>
         <p style={{ fontSize:"13px",color:"rgba(190,160,240,.55)",fontFamily:"'Cormorant Garamond','Georgia',serif",fontStyle:"italic",marginBottom:"32px",lineHeight:1.6 }}>
           {t.subtitle}
+        </p>
+        <p style={{ fontSize:"11px",color:"rgba(210,185,245,.58)",fontFamily:"'Cormorant Garamond','Georgia',serif",fontStyle:"italic",marginTop:"-18px",marginBottom:"24px",lineHeight:1.5 }}>
+          {t.dailyNote}
         </p>
 
         {/* ── Input group ── */}
