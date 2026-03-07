@@ -1,42 +1,36 @@
-import Anthropic from "@anthropic-ai/sdk"
+import OpenAI from "openai"
 import { runMultiAgentSystem } from "../ai/orchestrator.js"
 
 const useMock = process.env.DEMO_MODE === "true"
 
-const anthropic = useMock
+const openai = useMock
   ? null
-  : new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY
+  : new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
     })
 
 async function llm(prompt) {
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 400,
-      temperature: 0.7,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
+    const response = await openai.responses.create({
+      model: "gpt-5.4",
+      input: prompt,
+      max_output_tokens: 400
     })
 
-    return response.content[0].text
+    return response.output_text ?? ""
   } catch (error) {
-    const anthropicError = new Error(`Anthropic API error: ${error.message}`)
-    anthropicError.code = "ANTHROPIC_API_ERROR"
-    anthropicError.status = error.status ?? 502
-    throw anthropicError
+    const openaiError = new Error(`OpenAI API error: ${error.message}`)
+    openaiError.code = "OPENAI_API_ERROR"
+    openaiError.status = error.status ?? 502
+    throw openaiError
   }
 }
 
-function isAnthropicApiFailure(errorMessage = "") {
+function isOpenAIApiFailure(errorMessage = "") {
   return (
-    errorMessage.includes("Anthropic API error") ||
-    errorMessage.includes("credit balance is too low") ||
-    errorMessage.includes("rate_limit_error")
+    errorMessage.includes("OpenAI API error") ||
+    errorMessage.includes("insufficient_quota") ||
+    errorMessage.includes("rate_limit")
   )
 }
 
@@ -77,11 +71,11 @@ export default async function handler(req, res) {
       llm
     })
 
-    if (!result.success && isAnthropicApiFailure(result.error)) {
+    if (!result.success && isOpenAIApiFailure(result.error)) {
       return res.status(200).json({
         success: true,
         reading: generateFallbackReading(cardData),
-        warning: "Anthropic API unavailable. Returned fallback reading."
+        warning: "OpenAI API unavailable. Returned fallback reading."
       })
     }
 
@@ -90,11 +84,11 @@ export default async function handler(req, res) {
   } catch (error) {
     const hasCardData = Array.isArray(req.body?.cardData)
 
-    if (error.code === "ANTHROPIC_API_ERROR" && hasCardData) {
+    if (error.code === "OPENAI_API_ERROR" && hasCardData) {
       return res.status(200).json({
         success: true,
         reading: generateFallbackReading(req.body.cardData),
-        warning: "Anthropic API unavailable. Returned fallback reading."
+        warning: "OpenAI API unavailable. Returned fallback reading."
       })
     }
 
