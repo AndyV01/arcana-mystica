@@ -18,5 +18,6 @@
     "preview": "vite preview"
   },
   "author": "Andy V.",
-  "license": "MIT"
+  "license": "MIT",
+   "type": "module"
 }
