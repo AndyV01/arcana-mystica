@@ -4,6 +4,10 @@
   "description": "A stunning bilingual Tarot card reading app built with React",
   "private": true,
   "dependencies": {
+    "@langchain/core": "^1.1.32",
+    "@langchain/langgraph": "^1.2.2",
+    "groq-sdk": "^1.1.1",
+    "langsmith": "^0.5.10",
     "openai": "^5.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -19,5 +23,5 @@
   },
   "author": "Andy V.",
   "license": "MIT",
-   "type": "module"
+  "type": "module"
 }

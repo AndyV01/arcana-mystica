@@ -1,4 +1,4 @@
-import OpenAI from "openai"
+import Groq from "groq-sdk"
 import { runMultiAgentSystem } from "../ai/orchestrator.js"
 import { updateProfileFromSession } from "../ai/profile.utils.js"
 
@@ -7,23 +7,22 @@ const useMock = process.env.DEMO_MODE === "true"
 const openai = useMock
   ? null
   : new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.GROQ_API_KEY
     })
 
 async function llm(prompt) {
   try {
-    const response = await openai.responses.create({
-      model: "gpt-5.4",
-      input: prompt,
-      max_output_tokens: 400
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 400
     })
-
-    return response.output_text ?? ""
+    return response.choices[0]?.message?.content ?? ""
   } catch (error) {
-    const openaiError = new Error(`OpenAI API error: ${error.message}`)
-    openaiError.code = "OPENAI_API_ERROR"
-    openaiError.status = error.status ?? 502
-    throw openaiError
+    const groqError = new Error(`Groq API error: ${error.message}`)
+    groqError.code = "OPENAI_API_ERROR"
+    groqError.status = error.status ?? 502
+    throw groqError
   }
 }
 
