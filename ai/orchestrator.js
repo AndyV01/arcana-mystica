@@ -1,6 +1,5 @@
 /**
  * Orquestador con LangGraph StateGraph
- * Migrado desde funciones async manuales a un grafo de estados tipado
  */
 
 import { StateGraph, END } from "@langchain/langgraph"
@@ -9,9 +8,9 @@ import { hookAgent } from "./agents/hook.agent.js"
 import { plannerAgent } from "./agents/planner.agent.js"
 import { promptAgent } from "./agents/prompt.agent.js"
 import { criticAgent } from "./agents/critic.agent.js"
+import { traceable } from "langsmith/traceable"
 
 // ---------------------------------------------------------------------------
-// Estado compartido — reemplaza AgentContext
 // Cada nodo recibe el estado completo y retorna solo lo que cambia
 // ---------------------------------------------------------------------------
 const TarotState = Annotation.Root({
@@ -260,42 +259,46 @@ grafo.addEdge("pipeline_error", END)
 
 export const graph = grafo.compile({ checkpointer: undefined })
 
-// ---------------------------------------------------------------------------
-// Función pública — misma firma que antes para no romper generate-reading.js
-// ---------------------------------------------------------------------------
+// Función pública con tracing LangSmith
+export const runMultiAgentSystem = traceable(
+  async function runMultiAgentSystem({
+    objective,
+    cardData,
+    llm,
+    userProfile,
+    spread,
+    birthData,
+    lang = "es"
+  }) {
+    try {
+      const result = await graph.invoke({
+        objective,
+        cardData,
+        llm,
+        userProfile:   userProfile ?? {},
+        spread:        spread ?? null,
+        birthData:     birthData ?? null,
+        lang,
+        logs:          [],
+        error:         null,
+        plan:          null,
+        generatedText: null,
+        nextAction:    null
+      })
 
-export async function runMultiAgentSystem({
-  objective,
-  cardData,
-  llm,
-  userProfile,
-  spread,
-  birthData,
-  lang = "es"
-}) {
-  try {
-    const result = await graph.invoke({
-      objective,
-      cardData,
-      llm,
-      userProfile:   userProfile ?? {},
-      spread:        spread ?? null,
-      birthData:     birthData ?? null,
-      lang,
-      logs:          [],
-      error:         null,
-      plan:          null,
-      generatedText: null,
-      nextAction:    null
-    })
+      if (result.error) {
+        return { success: false, error: result.error }
+      }
 
-    if (result.error) {
-      return { success: false, error: result.error }
+      return { success: true, data: result }
+
+    } catch (err) {
+      return { success: false, error: err.message }
     }
-
-    return { success: true, data: result }
-
-  } catch (err) {
-    return { success: false, error: err.message }
+  },
+  {
+    name: "Arcana - Pipeline Completo",
+    tags: ["arcana-mystica", "production"],
+    metadata: { project: "arcana-mystica" }
   }
-}
+)
