@@ -1,7 +1,7 @@
 # Arcana Mistica - App de Tarot con IA Multi-Agente
 
 > App de lectura de tarot construida con React + Vite.
-> Las lecturas se generan con OpenAI `gpt-5.4` mediante un pipeline multi-agente,
+> Las lecturas se generan con Groq (Llama 3.3) mediante un pipeline multi-agente orquestado con LangGraph StateGraph,
 > con memoria de perfil local, tiradas personalizadas por dia y una API serverless.
 
 Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
@@ -25,37 +25,41 @@ Frontend React
    v
 Funcion serverless (api/generate-reading.js)
    |
-   +--> Orchestrator (ai/orchestrator.js)
-           1) Memory agent prepara el contexto del perfil
-           2) Planner agent define el orden de ejecucion
-           3) Prompt agent genera la interpretacion de tarot
-           4) Critic agent revisa tono y claridad
-           5) Memory agent finaliza el perfil del usuario
-           6) Hook agent sugiere la siguiente mejor accion
+   +--> LangGraph StateGraph (ai/orchestrator.js)
+           1) memory_init   → prepara el contexto del perfil
+           2) planner       → define el orden de ejecucion
+           3) prompt        → genera la interpretacion de tarot
+           4) critic        → revisa tono y claridad
+           5) memory_finalize → finaliza el perfil del usuario
+           6) hook          → sugiere la siguiente mejor accion
+           ↓
+        pipeline_error → END (si cualquier nodo falla)
    |
-   +--> OpenAI Responses API (gpt-5.4)
+   +--> Groq API (llama-3.3-70b-versatile)
 ```
 
 ### Responsabilidades de los agentes
 
 | Agente | Archivo | Rol |
 |---|---|---|
-| Memory | `ai/agents/memory.agent.js` | Construye y actualiza un perfil persistente del usuario a partir de cartas recurrentes, tiradas, temas y datos de nacimiento |
-| Planner | `ai/agents/planner.agent.js` | Devuelve el plan de ejecucion del pipeline |
-| Prompt | `ai/agents/prompt.agent.js` | Genera la lectura usando cartas, tirada, datos de nacimiento y contexto del perfil |
-| Critic | `ai/agents/critic.agent.js` | Revisa claridad, tono, repeticiones y longitud |
-| Hook | `ai/agents/hook.agent.js` | Crea la siguiente accion sugerida para traer al usuario de vuelta a la app |
-| Context | `ai/context.store.js` | Store de estado compartido usado por todos los agentes |
-| Orchestrator | `ai/orchestrator.js` | Coordina el flujo completo multi-agente |
+| memory_init | `ai/orchestrator.js` | Prepara y normaliza el perfil del usuario antes de la lectura |
+| planner | `ai/agents/planner.agent.js` | Devuelve el plan de ejecucion del pipeline en runtime |
+| prompt | `ai/agents/prompt.agent.js` | Genera la lectura usando cartas, tirada, datos de nacimiento y perfil |
+| critic | `ai/agents/critic.agent.js` | Revisa claridad, tono, repeticiones y longitud |
+| memory_finalize | `ai/orchestrator.js` | Finaliza y persiste el perfil actualizado con la sesion actual |
+| hook | `ai/agents/hook.agent.js` | Crea la siguiente accion sugerida para retener al usuario |
+| Orchestrator | `ai/orchestrator.js` | LangGraph StateGraph que coordina el flujo completo |
 
 ### Patrones implementados
 
-- Pipeline dinamico: el planner puede definir el orden de ejecucion en runtime.
-- Memoria compartida: `AgentContext` transporta estado a lo largo de toda la orquestacion.
-- Perfil persistente: el frontend guarda localmente el perfil evolutivo del usuario.
-- Retencion personalizada: el hook agent recomienda la siguiente tirada o accion.
-- Fallback controlado: `DEMO_MODE=true` evita OpenAI y devuelve una lectura local.
-- Secrets seguros: `OPENAI_API_KEY` existe solo del lado servidor.
+- **LangGraph StateGraph** — orquestador con estado tipado, nodos y edges condicionales.
+- **Estado compartido** — `TarotState` reemplaza al `AgentContext` manual, transportando estado entre nodos.
+- **Edges condicionales** — cada nodo puede derivar al nodo `pipeline_error` si falla.
+- **Pipeline dinamico** — el planner define el orden de ejecucion en runtime.
+- **Perfil persistente** — el frontend guarda localmente el perfil evolutivo del usuario.
+- **Retencion personalizada** — el hook agent recomienda la siguiente tirada o accion.
+- **Fallback controlado** — `DEMO_MODE=true` evita Groq y devuelve una lectura local.
+- **Secrets seguros** — `GROQ_API_KEY` existe solo del lado servidor.
 
 ---
 
@@ -98,10 +102,10 @@ arcana-mystica/
 |  |  |- planner.agent.js
 |  |  `- prompt.agent.js
 |  |- context.store.js
-|  |- orchestrator.js
+|  |- orchestrator.js        ← LangGraph StateGraph
 |  `- profile.utils.js
 |- api/
-|  `- generate-reading.js
+|  `- generate-reading.js    ← Groq API (llama-3.3-70b-versatile)
 |- src/
 |  |- App.jsx
 |  |- BirthDateModal.jsx
@@ -127,7 +131,7 @@ arcana-mystica/
 |---|---|
 | React 18 | UI y estado del cliente |
 | Vite 5 | Dev server y pipeline de build |
-| OpenAI API | Generacion LLM con `gpt-5.4` |
+| OpenAI API | Generacion LLM con `llama-3.3-70b-versatile` (gratis)  |
 | Vercel Serverless | Despliegue del endpoint API |
 | Node.js | Runtime de agentes y capa API |
 | localStorage | Persistencia de diario y perfil |
@@ -138,7 +142,7 @@ arcana-mystica/
 
 ```bash
 # .env.local
-OPENAI_API_KEY=sk-proj-...
+GROQ_API_KEY=gsk_...
 DEMO_MODE=false
 ```
 
@@ -149,7 +153,7 @@ DEMO_MODE=false
 
 En Vercel (`Settings -> Environment Variables`):
 
-- `OPENAI_API_KEY`
+- `GROQ_API_KEY`
 - `DEMO_MODE`
 
 Notas:
@@ -186,25 +190,27 @@ npm run build
 
 ```bash
 git add .
-git commit -m "feat: update profile memory and retention flow"
+git commit -m "feat: descripcion del cambio"
 git push
 ```
 
 Configurar en Vercel:
 
-- `OPENAI_API_KEY`: tu secret key de OpenAI
+- `GROQ_API_KEY`: tu secret key de Groq (gratis en console.groq.com)
 - `DEMO_MODE`: `false` en produccion
 
 ---
 
 ## Que demuestra este proyecto
 
-- Orquestacion multi-agente aplicada a un producto real.
-- Integracion con OpenAI usando `gpt-5.4`.
-- Memoria persistente de perfil impulsada por el historial de lecturas.
-- Diseno orientado a retencion mediante hook agent y siguientes acciones sugeridas.
-- Logica diaria de tarot personalizado basada en fecha de nacimiento mas dia actual.
-- Frontend React con UI animada, diario y flujo de compartido.
+- **Orquestacion multi-agente real** con LangGraph StateGraph en JavaScript.
+- **Estado tipado** con `TarotState` — cada nodo recibe el estado completo y retorna solo lo que cambia.
+- **Edges condicionales** — manejo de errores por nodo con derivacion a `pipeline_error`.
+- **LLM gratuito** con Groq API (llama-3.3-70b-versatile) en produccion.
+- **Memoria persistente** de perfil impulsada por el historial de lecturas.
+- **Diseno orientado a retencion** mediante hook agent y siguientes acciones sugeridas.
+- **Logica diaria personalizada** basada en fecha de nacimiento mas dia actual.
+- **Frontend React** con UI animada, diario y flujo de compartido.
 
 ---
 
