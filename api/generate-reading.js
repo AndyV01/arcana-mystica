@@ -1,14 +1,15 @@
 import Groq from "groq-sdk"
 import { runMultiAgentSystem } from "../ai/orchestrator.js"
 import { updateProfileFromSession } from "../ai/profile.utils.js"
+import { Client } from "langsmith"
 
 const useMock = process.env.DEMO_MODE === "true"
 
 const groq = useMock
   ? null
   : new Groq({
-      apiKey: process.env.GROQ_API_KEY
-    })
+    apiKey: process.env.GROQ_API_KEY
+  })
 
 async function llm(prompt) {
   try {
@@ -213,7 +214,10 @@ export default async function handler(req, res) {
           ? "OpenAI API unavailable. Returned fallback reading."
           : undefined
       })
-
+      try {
+        const langsmithClient = new Client()
+        await langsmithClient.awaitPendingTraceBatches()
+      } catch (_) { }
       return res.status(200).json({
         success: true,
         reading: payload.reading,
