@@ -4,9 +4,9 @@ import { updateProfileFromSession } from "../ai/profile.utils.js"
 
 const useMock = process.env.DEMO_MODE === "true"
 
-const openai = useMock
+const groq = useMock
   ? null
-  : new OpenAI({
+  : new Groq({
       apiKey: process.env.GROQ_API_KEY
     })
 
