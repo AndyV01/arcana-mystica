@@ -6,7 +6,8 @@ export async function promptAgent({
   llm,
   spread,
   birthData,
-  lang = "es"
+  lang = "es",
+  similarReadings = []
 }) {
   const cards = summarizeCardData(cardData, lang)
   const profile = context.get("userProfile")
@@ -34,6 +35,11 @@ ${birthData ? JSON.stringify({
     zodiac: birthData.zodiac?.[lang] ?? birthData.zodiac?.en ?? null,
     lifePathNum: birthData.lifePathNum ?? null
   }) : "Sin datos de nacimiento"}
+  
+${similarReadings.length > 0 ? `
+Lecturas anteriores relacionadas (úsalas como contexto energético, no las repitas textualmente):
+${similarReadings.map((r, i) => `${i + 1}. ${r.reading?.slice(0, 200)}...`).join("\n")}
+` : ""}
 
 Cartas:
 ${cards.map((card, index) => (

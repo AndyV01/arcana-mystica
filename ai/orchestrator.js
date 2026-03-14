@@ -9,26 +9,28 @@ import { plannerAgent } from "./agents/planner.agent.js"
 import { promptAgent } from "./agents/prompt.agent.js"
 import { criticAgent } from "./agents/critic.agent.js"
 import { traceable } from "langsmith/traceable"
+import { ragAgent, saveReading } from "./agents/rag.agent.js"
 
 // ---------------------------------------------------------------------------
 // Cada nodo recibe el estado completo y retorna solo lo que cambia
 // ---------------------------------------------------------------------------
 const TarotState = Annotation.Root({
   // inputs
-  objective:     Annotation({ reducer: (_, v) => v }),
-  cardData:      Annotation({ reducer: (_, v) => v }),
-  llm:           Annotation({ reducer: (_, v) => v }),
-  userProfile:   Annotation({ reducer: (_, v) => v }),
-  spread:        Annotation({ reducer: (_, v) => v }),
-  birthData:     Annotation({ reducer: (_, v) => v }),
-  lang:          Annotation({ reducer: (_, v) => v }),
+  objective: Annotation({ reducer: (_, v) => v }),
+  cardData: Annotation({ reducer: (_, v) => v }),
+  llm: Annotation({ reducer: (_, v) => v }),
+  userProfile: Annotation({ reducer: (_, v) => v }),
+  spread: Annotation({ reducer: (_, v) => v }),
+  birthData: Annotation({ reducer: (_, v) => v }),
+  lang: Annotation({ reducer: (_, v) => v }),
+  similarReadings: Annotation({ reducer: (_, v) => v }),
   // outputs de agentes
-  plan:          Annotation({ reducer: (_, v) => v }),
+  plan: Annotation({ reducer: (_, v) => v }),
   generatedText: Annotation({ reducer: (_, v) => v }),
-  nextAction:    Annotation({ reducer: (_, v) => v }),
+  nextAction: Annotation({ reducer: (_, v) => v }),
   // control
-  logs:          Annotation({ reducer: (a, b) => [...(a ?? []), ...(b ?? [])] }),
-  error:         Annotation({ reducer: (_, v) => v }),
+  logs: Annotation({ reducer: (a, b) => [...(a ?? []), ...(b ?? [])] }),
+  error: Annotation({ reducer: (_, v) => v }),
 })
 
 // ---------------------------------------------------------------------------
@@ -57,13 +59,32 @@ async function nodoMemoryInit(state) {
   }
 }
 
+async function nodoRAG(state) {
+  try {
+    const userId = state.userProfile?.userId ?? "anonymous"
+    const similarReadings = await ragAgent({
+      userId,
+      cardData: state.cardData,
+      lang: state.lang,
+      topK: 3
+    })
+
+    return {
+      similarReadings,
+      logs: [`RAG agent found ${similarReadings.length} similar readings`]
+    }
+  } catch (err) {
+    return { similarReadings: [], logs: ["RAG agent failed, continuing without context"] }
+  }
+}
+
 async function nodoPlanner(state) {
   try {
     const plan = await plannerAgent({
       objective: state.objective,
       context: {
         get: (key) => state[key],
-        update: () => {}
+        update: () => { }
       },
       llm: state.llm
     })
@@ -89,7 +110,8 @@ async function nodoPrompt(state) {
       llm: state.llm,
       spread: state.spread,
       birthData: state.birthData,
-      lang: state.lang
+      lang: state.lang,
+      similarReadings: state.similarReadings ?? [] 
     })
 
     return { generatedText, logs: ["Prompt agent executed"] }
@@ -167,6 +189,14 @@ ${JSON.stringify({
       baseProfile.profileSummary = buildProfileSummary(baseProfile, state.lang)
     }
 
+    await saveReading({
+      userId: state.userProfile?.userId ?? "anonymous",
+      cardData: state.cardData,
+      reading: state.generatedText,
+      spread: state.spread,
+      lang: state.lang
+    })
+
     return {
       userProfile: baseProfile,
       logs: ["Memory agent finalized profile"]
@@ -209,7 +239,7 @@ async function nodoError(state) {
 
 function decidirTrasMemoryInit(state) {
   if (state.error) return "pipeline_error"
-  return "planner"
+  return "rag"
 }
 
 function decidirTrasPlanner(state) {
@@ -232,29 +262,36 @@ function decidirTrasMemoryFinalize(state) {
   return "hook"
 }
 
+function decidirTrasRAG(state) {
+  if (state.error) return "pipeline_error"
+  return "planner"
+}
+
 // ---------------------------------------------------------------------------
 // Grafo
 // ---------------------------------------------------------------------------
 
 const grafo = new StateGraph(TarotState)
 
-grafo.addNode("memory_init",      nodoMemoryInit)
-grafo.addNode("planner",          nodoPlanner)
-grafo.addNode("prompt",           nodoPrompt)
-grafo.addNode("critic",           nodoCritic)
-grafo.addNode("memory_finalize",  nodoMemoryFinalize)
-grafo.addNode("hook",             nodoHook)
-grafo.addNode("pipeline_error",            nodoError)
+grafo.addNode("memory_init", nodoMemoryInit)
+grafo.addNode("planner", nodoPlanner)
+grafo.addNode("prompt", nodoPrompt)
+grafo.addNode("critic", nodoCritic)
+grafo.addNode("memory_finalize", nodoMemoryFinalize)
+grafo.addNode("hook", nodoHook)
+grafo.addNode("pipeline_error", nodoError)
+grafo.addNode("rag", nodoRAG)
 
 grafo.setEntryPoint("memory_init")
 
-grafo.addConditionalEdges("memory_init",     decidirTrasMemoryInit)
-grafo.addConditionalEdges("planner",         decidirTrasPlanner)
-grafo.addConditionalEdges("prompt",          decidirTrasPrompt)
-grafo.addConditionalEdges("critic",          decidirTrasCritic)
+grafo.addConditionalEdges("memory_init", decidirTrasMemoryInit)
+grafo.addConditionalEdges("rag", decidirTrasRAG)
+grafo.addConditionalEdges("planner", decidirTrasPlanner)
+grafo.addConditionalEdges("prompt", decidirTrasPrompt)
+grafo.addConditionalEdges("critic", decidirTrasCritic)
 grafo.addConditionalEdges("memory_finalize", decidirTrasMemoryFinalize)
 
-grafo.addEdge("hook",  END)
+grafo.addEdge("hook", END)
 grafo.addEdge("pipeline_error", END)
 
 export const graph = grafo.compile({ checkpointer: undefined })
@@ -275,15 +312,16 @@ export const runMultiAgentSystem = traceable(
         objective,
         cardData,
         llm,
-        userProfile:   userProfile ?? {},
-        spread:        spread ?? null,
-        birthData:     birthData ?? null,
+        userProfile: userProfile ?? {},
+        spread: spread ?? null,
+        birthData: birthData ?? null,
         lang,
-        logs:          [],
-        error:         null,
-        plan:          null,
+        logs: [],
+        error: null,
+        plan: null,
         generatedText: null,
-        nextAction:    null
+        nextAction: null,
+        similarReadings: []
       })
 
       if (result.error) {
