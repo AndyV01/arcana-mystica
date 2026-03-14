@@ -2,9 +2,11 @@
 
 > App de lectura de tarot construida con React + Vite.
 > Las lecturas se generan con Groq (Llama 3.3) mediante un pipeline multi-agente orquestado con LangGraph StateGraph,
-> con observabilidad completa via LangSmith, memoria de perfil local, tiradas personalizadas por dia y una API serverless.
+> con RAG real sobre historial de lecturas via Upstash Redis, observabilidad completa via LangSmith,
+> memoria de perfil local, tiradas personalizadas por dia y una API serverless.
 
 [![LangSmith](https://img.shields.io/badge/LangSmith-Observability-blue)](https://smith.langchain.com)
+[![RAG](https://img.shields.io/badge/RAG-Upstash%20Redis-red)](https://upstash.com)
 
 Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
@@ -13,8 +15,8 @@ Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 ## Resumen
 
 Arcana Mistica combina una experiencia visual de tarot con un backend basado en agentes especializados orquestados con LangGraph.
-La app soporta lecturas bilingues, persistencia de perfil, personalizacion por fecha de nacimiento
-y loops de retencion como diario de lecturas, contenido diario y sugerencias de siguiente accion.
+La app soporta lecturas bilingues, persistencia de perfil, personalizacion por fecha de nacimiento,
+RAG sobre historial de lecturas anteriores y loops de retencion como diario de lecturas, contenido diario y sugerencias de siguiente accion.
 
 ---
 
@@ -28,16 +30,19 @@ Frontend React
 Funcion serverless (api/generate-reading.js)
    |
    +--> LangGraph StateGraph (ai/orchestrator.js)
-           1) memory_init   → prepara el contexto del perfil
-           2) planner       → define el orden de ejecucion
-           3) prompt        → genera la interpretacion de tarot
-           4) critic        → revisa tono y claridad
-           5) memory_finalize → finaliza el perfil del usuario
-           6) hook          → sugiere la siguiente mejor accion
-           ↓
+   |       1) memory_init     → prepara el contexto del perfil
+   |       2) rag             → recupera lecturas similares desde Upstash Redis
+   |       3) planner         → define el orden de ejecucion
+   |       4) prompt          → genera la interpretacion con contexto RAG
+   |       5) critic          → revisa tono y claridad
+   |       6) memory_finalize → actualiza perfil y guarda lectura en Redis
+   |       7) hook            → sugiere la siguiente accion personalizada
+   |       ↓
         pipeline_error → END (si cualquier nodo falla)
    |
    +--> Groq API (llama-3.3-70b-versatile)
+   |
+   +--> Upstash Redis (historial de lecturas por usuario)
    |
    +--> LangSmith (tracing + observabilidad completa)
 ```
@@ -48,7 +53,7 @@ Funcion serverless (api/generate-reading.js)
 |---|---|---|
 | memory_init | `ai/orchestrator.js` | Prepara y normaliza el perfil del usuario antes de la lectura |
 | planner | `ai/agents/planner.agent.js` | Devuelve el plan de ejecucion del pipeline en runtime |
-| prompt | `ai/agents/prompt.agent.js` | Genera la lectura usando cartas, tirada, datos de nacimiento y perfil |
+| prompt | `ai/agents/prompt.agent.js` | Genera la lectura usando cartas, tirada, perfil y contexto RAG |
 | critic | `ai/agents/critic.agent.js` | Revisa claridad, tono, repeticiones y longitud |
 | memory_finalize | `ai/orchestrator.js` | Finaliza y persiste el perfil actualizado con la sesion actual |
 | hook | `ai/agents/hook.agent.js` | Crea la siguiente accion sugerida para retener al usuario |
@@ -57,13 +62,45 @@ Funcion serverless (api/generate-reading.js)
 ### Patrones implementados
 
 - **LangGraph StateGraph** — orquestador con estado tipado, nodos y edges condicionales.
-- **Estado compartido** — `TarotState` reemplaza al `AgentContext` manual, transportando estado entre nodos.
+- **Estado compartido** — `TarotState` transporta estado entre nodos; cada nodo retorna solo lo que cambia.
 - **Edges condicionales** — cada nodo puede derivar al nodo `pipeline_error` si falla.
+- **RAG real** — el nodo `rag` recupera lecturas anteriores semanticamente similares desde Upstash Redis y las inyecta como contexto en el prompt agent.
+- **Similitud Jaccard** — calcula similitud entre vectores de keywords de cartas para encontrar lecturas relacionadas.
+- **Persistencia en servidor** — cada lectura se guarda en Redis al finalizar el pipeline (maximo 50 por usuario).
+- **LangSmith tracing** — observabilidad completa del pipeline con latencia por nodo, tokens y metadata.
 - **Pipeline dinamico** — el planner define el orden de ejecucion en runtime.
 - **Perfil persistente** — el frontend guarda localmente el perfil evolutivo del usuario.
 - **Retencion personalizada** — el hook agent recomienda la siguiente tirada o accion.
 - **Fallback controlado** — `DEMO_MODE=true` evita Groq y devuelve una lectura local.
-- **Secrets seguros** — `GROQ_API_KEY`y `LANGCHAIN_API_KEY` existen solo del lado servidor.
+- **Secrets seguros** — `GROQ_API_KEY`, `LANGCHAIN_API_KEY` y `UPSTASH_REDIS_REST_TOKEN` existen solo del lado servidor.
+
+---
+
+## RAG — Retrieval Augmented Generation
+
+El sistema implementa RAG real sobre el historial de lecturas del usuario:
+
+### Flujo RAG
+```text
+Cartas actuales
+      ↓
+cardsToVector() → extrae keywords y significados como vector
+      ↓
+Redis lrange() → recupera hasta 50 lecturas anteriores
+      ↓
+similarity() → calcula similitud Jaccard entre vectores
+      ↓
+Top 3 lecturas mas similares → contexto para el prompt agent
+      ↓
+Interpretacion enriquecida con patrones historicos reales
+```
+
+### Estructura en Redis
+```text
+Key: readings:{userId}
+Tipo: List (lpush + ltrim — maximo 50 entradas)
+Entry: { id, cardData, reading, spread, lang, createdAt }
+```
 
 ---
 
@@ -118,7 +155,8 @@ arcana-mystica/
 |  |  |- hook.agent.js
 |  |  |- memory.agent.js
 |  |  |- planner.agent.js
-|  |  `- prompt.agent.js
+|  |  |- prompt.agent.js       ← recibe similarReadings como contexto RAG
+|  |  `- rag.agent.js          ← RAG con Upstash Redis + similitud Jaccard
 |  |- context.store.js
 |  |- orchestrator.js        ← LangGraph StateGraph + LangSmith tracing
 |  `- profile.utils.js
@@ -152,6 +190,7 @@ arcana-mystica/
 | LangGraph JS | Orquestacion multi-agente con StateGraph |
 | LangSmith | Observabilidad, tracing y monitoreo del pipeline |
 | Groq API | Generacion LLM con `llama-3.3-70b-versatile` (gratis) |
+| Upstash Redis | Historial de lecturas por usuario (serverless, gratis) |
 | Vercel Serverless | Despliegue del endpoint API |
 | Node.js | Runtime de agentes y capa API |
 | localStorage | Persistencia de diario y perfil |
@@ -166,6 +205,8 @@ GROQ_API_KEY=gsk_...
 DEMO_MODE=false
 LANGCHAIN_API_KEY=lsv2_pt_...
 LANGCHAIN_PROJECT=arcana-mystica
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
 DEMO_MODE=false
 ```
 
@@ -180,6 +221,8 @@ En Vercel (`Settings -> Environment Variables`):
 - `LANGCHAIN_TRACING_V2`
 - `LANGCHAIN_API_KEY`
 - `LANGCHAIN_PROJECT`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 - `DEMO_MODE`
 
 Notas:
@@ -187,6 +230,7 @@ Notas:
 - En desarrollo local, Vite expone `/api/generate-reading` mediante middleware en `vite.config.js`.
 - Con `DEMO_MODE=true`, la app evita OpenAI y responde con lecturas fallback.
 - LangSmith requiere flush explicito antes de cerrar la funcion serverless para que las trazas cierren correctamente.
+- Upstash Redis guarda hasta 50 lecturas por usuario usando `lpush` + `ltrim`.
 
 ---
 
@@ -227,6 +271,8 @@ Configurar en Vercel:
 - `LANGCHAIN_TRACING_V2`: `true`
 - `LANGCHAIN_API_KEY`: tu secret key de LangSmith
 - `LANGCHAIN_PROJECT`: `arcana-mystica`
+- `UPSTASH_REDIS_REST_URL`: URL de tu base de datos en upstash.com
+- `UPSTASH_REDIS_REST_TOKEN`: token de tu base de datos en upstash.com
 - `DEMO_MODE`: `false` en produccion
 
 ---
@@ -236,8 +282,11 @@ Configurar en Vercel:
 - **Orquestacion multi-agente real** con LangGraph StateGraph en JavaScript.
 - **Estado tipado** con `TarotState` — cada nodo recibe el estado completo y retorna solo lo que cambia.
 - **Edges condicionales** — manejo de errores por nodo con derivacion a `pipeline_error`.
+- **RAG real** — recuperacion semantica de lecturas anteriores desde Upstash Redis como contexto para el LLM.
+- **Similitud Jaccard** — calculo de similitud entre vectores de keywords sin dependencias externas de embeddings.
 - **Observabilidad completa** con LangSmith — tracing por nodo, tokens, latencia y error metadata en local y produccion.
 - **LLM gratuito** con Groq API (llama-3.3-70b-versatile) en produccion.
+- **Persistencia serverless** con Upstash Redis — historial de lecturas por usuario sin BD tradicional.
 - **Memoria persistente** de perfil impulsada por el historial de lecturas.
 - **Diseno orientado a retencion** mediante hook agent y siguientes acciones sugeridas.
 - **Logica diaria personalizada** basada en fecha de nacimiento mas dia actual.
