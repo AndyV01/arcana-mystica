@@ -12,7 +12,6 @@ Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
 ### Demo
 
-
 ---
 
 ## Resumen
