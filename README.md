@@ -10,6 +10,12 @@
 
 Demo en vivo: [arcana-mystica.vercel.app](https://arcana-mystica.vercel.app)
 
+### Demo
+
+<video controls width="900">
+  <source src="./assets/arcana.mp4" type="video/mp4">
+</video>
+
 ---
 
 ## Resumen
