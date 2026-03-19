@@ -232,7 +232,6 @@ En Vercel (`Settings -> Environment Variables`):
 Notas:
 
 - En desarrollo local, Vite expone `/api/generate-reading` mediante middleware en `vite.config.js`.
-- Con `DEMO_MODE=true`, la app evita OpenAI y responde con lecturas fallback.
 - LangSmith requiere flush explicito antes de cerrar la funcion serverless para que las trazas cierren correctamente.
 - Upstash Redis guarda hasta 50 lecturas por usuario usando `lpush` + `ltrim`.
 
