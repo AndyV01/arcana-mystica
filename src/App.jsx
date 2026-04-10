@@ -199,7 +199,7 @@ export default function App() {
     }}>
       <style>{CSS}</style>
 
-      {/* ── VIDEO FONDO — solo home idle ── */}
+      {/* VIDEO FONDO */}
       {isHomeIdle && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -333,10 +333,10 @@ export default function App() {
         ))}
       </nav>
 
-      {/* ── CONTENT ─────────────────────────────────────── */}
+      {/* CONTENT */}
       <main style={{ position: "relative", zIndex: 10, paddingTop: "62px", paddingBottom: "72px" }}>
 
-        {/* ══ HOME TAB ═══════════════════════════════════ */}
+        {/* HOME TAB */}
         {tab === "home" && phase === "idle" && (
           <div style={{ maxWidth: "920px", margin: "0 auto", padding: "40px 20px 20px", textAlign: "center" }}>
 
