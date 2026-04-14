@@ -80,6 +80,15 @@ Funcion serverless (api/generate-reading.js)
 
 ---
 
+## 🧩 Problema que resuelve
+
+Las apps de tarot existentes son:
+- **Genéricas**: dan la misma interpretación a todos
+- **Sin memoria**: no recuerdan tus lecturas anteriores
+- **Estáticas**: no aprenden de tus patrones
+
+**Arcana Mistica** usa IA multi-agente para crear lecturas personalizadas que evolucionan con tu historial, usando RAG real sobre tus tiradas previas.
+
 ## RAG — Retrieval Augmented Generation
 
 El sistema implementa RAG real sobre el historial de lecturas del usuario:
@@ -296,6 +305,11 @@ Configurar en Vercel:
 - **Frontend React** con UI animada, diario y flujo de compartido.
 
 ---
+## 🎓 Aprendizajes clave
+
+- **Optimización de costos**: Reemplacé embeddings costosos por similitud Jaccard con keywords, reduciendo costos a ~$0
+- **Serverless constraints**: Aprendí a manejar el cold start y el flush de LangSmith antes de que cierre la función
+- **UX asíncrona**: Diseñé estados de carga que mantienen al usuario informado durante el pipeline multi-agente
 
 ## Autor
 
