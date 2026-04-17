@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         });
 
         res.json({
-            init_point: response.init_point,
+            init_point: response.init_point || response.sandbox_init_point,
         });
 
     } catch (error) {
