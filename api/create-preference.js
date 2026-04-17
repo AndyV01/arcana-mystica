@@ -46,6 +46,12 @@ export default async function handler(req, res) {
         res.json({
             init_point: response.init_point || response.sandbox_init_point,
         });
+        if (!url) {
+  console.error("MP BAD RESPONSE:", response);
+  return res.status(500).json({ error: "No init_point" });
+}
+
+res.json({ init_point: url });
 
     } catch (error) {
         console.error("MP ERROR:", error);
