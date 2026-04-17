@@ -35,11 +35,11 @@ export default async function handler(req, res) {
                     credits: selected.credits,
                 },
                 back_urls: {
-                    success: "http://localhost:5173",
-                    failure: "http://localhost:5173",
-                    pending: "http://localhost:5173",
+                    success: `${process.env.APP_URL}?payment=success&pack=${pack}`,
+                    failure: `${process.env.APP_URL}?payment=fail`,
+                    pending: `${process.env.APP_URL}?payment=pending`,
                 },
-                
+
             },
         });
 

@@ -12,6 +12,7 @@ import { CardBackSVG } from "./CardSVG.jsx"
 import { TRANSLATIONS, SPREADS, MAJOR_ARCANA, generateMinorArcana } from "./data.js"
 import { getUserId, canGenerateReading, consumeCredit } from "./credits.js"
 import PaywallModal from "./PaywallModal.jsx"
+import { useCredits } from "./hooks/useCredits";
 
 const ALL_CARDS = [...MAJOR_ARCANA, ...generateMinorArcana()]
 
@@ -51,56 +52,58 @@ export default function App() {
   const shuffleRef = useRef(null)
   const [shuffleTick, setShuffleTick] = useState(0)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [creditAnimation, setCreditAnimation] = useState(null);
 
   const t = TRANSLATIONS[lang]
   const spreads = SPREADS[lang]
+  const { credits, reloadCredits } = useCredits();
 
   function getDailyReadingSeed(baseSeed) {
-  const now = new Date()
-  const daySeed = Number(
-    `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
-  )
+    const now = new Date()
+    const daySeed = Number(
+      `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
+    )
 
-  return (baseSeed * 31 + daySeed) % 2147483647
-}
-
-async function handleReadingFlow() {
-  if (isGenerating) return;
-
-  setIsGenerating(true);
-
-  try {
-    const userId = getUserId();
-
-    const creditStatus = await canGenerateReading(userId);
-
-    if (!creditStatus.hasCredits) {
-      setShowReading(false); 
-      setShowPaywall(true);
-      return;
-    }
-
-    // Consumir crédito ANTES de mostrar
-    await consumeCredit(userId);
-
-    // Mostrar lectura
-    setReadingCards(dealtCards);
-    setShowReading(true);
-
-    const ns = { visits: stats.visits, readings: stats.readings + 1 };
-    setStats(ns);
-    await saveStats(ns);
-
-    await addDiaryEntry(dealtCards, selectedSpread, lang, birthData);
-
-  } catch (err) {
-    console.error("Reading flow error:", err);
-    alert("Ocurrió un error al generar la lectura");
-  } finally {
-    
-    setIsGenerating(false);
+    return (baseSeed * 31 + daySeed) % 2147483647
   }
-}
+
+  async function handleReadingFlow() {
+    if (isGenerating) return;
+
+    setIsGenerating(true);
+
+    try {
+      const userId = getUserId();
+
+      const creditStatus = await canGenerateReading(userId);
+
+      if (!creditStatus.hasCredits) {
+        setShowReading(false);
+        setShowPaywall(true);
+        return;
+      }
+
+      // Consumir crédito ANTES de mostrar
+      await consumeCredit(userId);
+      reloadCredits();
+      // Mostrar lectura
+      setReadingCards(dealtCards);
+      setShowReading(true);
+
+      const ns = { visits: stats.visits, readings: stats.readings + 1 };
+      setStats(ns);
+      await saveStats(ns);
+
+      await addDiaryEntry(dealtCards, selectedSpread, lang, birthData);
+
+    } catch (err) {
+      console.error("Reading flow error:", err);
+      alert("Ocurrió un error al generar la lectura");
+    } finally {
+
+      setIsGenerating(false);
+    }
+  }
 
   useEffect(() => {
     ; (async () => {
@@ -146,7 +149,7 @@ async function handleReadingFlow() {
     setRevealedIndexes(prev => {
       const next = [...new Set([...prev, idx])]
       if (next.length === dealtCards.length) {
-        setTimeout( () => {
+        setTimeout(() => {
           handleReadingFlow();
         }, 900)
       }
@@ -159,6 +162,34 @@ async function handleReadingFlow() {
     setDealtCards([]); setRevealedIndexes([]); setReadingCards([])
     setSelectedSpread(null); setBirthData(null)
   }
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  const paymentStatus = params.get("payment");
+  const pack = params.get("pack");
+
+  const creditsMap = {
+    pack5: 5,
+    single: 1,
+  };
+
+  const credits = creditsMap[pack] || 0;
+
+  if (paymentStatus === "success" && credits > 0 ) {
+    reloadCredits();
+    setShowPaywall(false);
+
+    // 🔥 ANIMACIÓN dinámica
+    setCreditAnimation(credits);
+
+    setTimeout(() => {
+      setCreditAnimation(null);
+    }, 2500);
+
+    // limpiar URL
+    window.history.replaceState({}, document.title, "/");
+  }
+}, []);
 
   const tabLabels = {
     en: [{ id: "home", icon: "/img/tarot02.png", label: "Spreads" },
@@ -201,7 +232,23 @@ async function handleReadingFlow() {
       100%{filter:drop-shadow(0 0 6px rgba(245,180,50,.6)) drop-shadow(0 0 14px rgba(245,180,50,.3));}
     }
     @keyframes videoFadeIn{from{opacity:0}to{opacity:0.5}}
- 
+ @keyframes creditPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.1);
+  }
+  50% {
+    transform: translate(-50%, -70%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -90%) scale(0.9);
+  }
+}
     /* spread cards — paleta base */
     .spread-card{transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease!important;}
     .spread-card:hover{transform:translateY(-8px) scale(1.04)!important;box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 36px rgba(140,80,255,.35)!important;}
@@ -222,6 +269,7 @@ async function handleReadingFlow() {
     .lang-btn-gold:hover{background:rgba(200,140,20,.2)!important;color:#f5c842!important;}
     .stat-pill:hover{border-color:rgba(200,160,255,.4)!important;}
     .stat-pill-gold:hover{border-color:rgba(220,170,50,.45)!important;}
+
   `
 
   return (
@@ -325,6 +373,48 @@ async function handleReadingFlow() {
               </div>
             </div>
           ))}
+          {credits && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "4px 12px",
+                borderRadius: "20px",
+                border: "1px solid rgba(140,80,255,.15)",
+                background: "linear-gradient(135deg, rgba(80,35,160,.2), rgba(40,15,80,.3))",
+                fontFamily: "'Cinzel',serif"
+              }}
+            >
+              <span style={{ fontSize: "12px" }}>
+                {credits.hasFree ? "✨" : "💎"}
+              </span>
+
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    color: "#d4b4ff",
+                    lineHeight: 1
+                  }}
+                >
+                  {credits.hasFree ? "FREE" : credits.paidCredits}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "7px",
+                    letterSpacing: "1.5px",
+                    color: "rgb(180,140,255)",
+                    textTransform: "uppercase"
+                  }}
+                >
+                  {credits.hasFree ? "1 disponible" : "créditos"}
+                </div>
+              </div>
+            </div>
+          )}
           <button
             className={isHomeIdle ? "lang-btn-gold" : "lang-btn"}
             onClick={() => setLang(l => l === "en" ? "es" : "en")}
@@ -566,8 +656,30 @@ async function handleReadingFlow() {
         <ShareCard cards={readingCards} spread={selectedSpread} lang={lang} birthData={birthData} onClose={() => { setShowShare(false); reset() }} />
       )}
       {showPaywall && (
-  <PaywallModal onClose={() => setShowPaywall(false)} />
-)}
+        <PaywallModal onClose={() => setShowPaywall(false)} />
+      )}
+      {creditAnimation && (
+        <div style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 9999,
+          pointerEvents: "none",
+          animation: "creditPop 2.5s ease forwards"
+        }}>
+          <div style={{
+            fontSize: "28px",
+            fontWeight: "bold",
+            color: "#e9d5ff",
+            fontFamily: "'Cinzel',serif",
+            textAlign: "center",
+            textShadow: "0 0 20px rgba(180,120,255,0.8)"
+          }}>
+            💎 +{creditAnimation}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

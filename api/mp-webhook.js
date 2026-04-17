@@ -6,13 +6,14 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
 
-    if (body.type !== "payment") {
+    // validar tipo
+    if (!body || body.type !== "payment") {
       return res.status(200).send("ignored");
     }
 
     const paymentId = body.data.id;
 
-    // 🔥 obtener info del pago
+    // traer info real del pago
     const response = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
@@ -24,20 +25,38 @@ export default async function handler(req, res) {
 
     const payment = await response.json();
 
-    if (payment.status === "approved") {
-      const { userId, credits } = payment.metadata;
-
-      const key = `credits:paid:${userId}`;
-      const current = (await redis.get(key)) || 0;
-
-      await redis.set(key, current + credits);
-
-      console.log("✅ Créditos acreditados:", credits);
+    // validar que esté aprobado
+    if (payment.status !== "approved") {
+      return res.status(200).send("not approved");
     }
 
-    res.status(200).send("ok");
+    const { userId, credits } = payment.metadata;
+
+    if (!userId || !credits) {
+      return res.status(400).send("missing metadata");
+    }
+
+    const key = `credits:paid:${userId}`;
+
+    //  evitar duplicados (CLAVE)
+    const alreadyProcessed = await redis.get(`payment:${paymentId}`);
+    if (alreadyProcessed) {
+      return res.status(200).send("already processed");
+    }
+
+    const current = (await redis.get(key)) || 0;
+
+    await redis.set(key, current + credits);
+
+    // marcar pago como procesado
+    await redis.set(`payment:${paymentId}`, 1);
+
+    console.log("✅ Créditos acreditados:", credits);
+
+    return res.status(200).send("ok");
+
   } catch (err) {
     console.error("Webhook error:", err);
-    res.status(500).send("error");
+    return res.status(500).send("error");
   }
 }
