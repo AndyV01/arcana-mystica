@@ -115,7 +115,31 @@ function apiDevPlugin() {
           }
         })
       })
+// ─── MP WEBHOOK ─────────────────────────────────────────────
+server.middlewares.use('/api/mp-webhook', async (req, res) => {
+  if (req.method !== 'POST') {
+    res.statusCode = 405
+    res.end(JSON.stringify({ error: 'Method not allowed' }))
+    return
+  }
 
+  let rawBody = ''
+  req.on('data', chunk => rawBody += chunk)
+
+  req.on('end', async () => {
+    try {
+      req.body = rawBody ? JSON.parse(rawBody) : {}
+
+      const handler = await getHandler('./api/mp-webhook.js')
+      await handler(req, createResponseAdapter(res))
+
+    } catch (error) {
+      console.error("mp-webhook error:", error)
+      res.statusCode = 500
+      res.end(JSON.stringify({ error: error.message }))
+    }
+  })
+})
     }
   }
 }
