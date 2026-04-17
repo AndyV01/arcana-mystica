@@ -9,6 +9,7 @@
     "@upstash/redis": "^1.37.0",
     "groq-sdk": "^1.1.1",
     "langsmith": "^0.5.10",
+    "mercadopago": "^2.12.0",
     "openai": "^5.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

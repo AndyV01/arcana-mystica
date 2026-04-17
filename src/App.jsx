@@ -10,17 +10,10 @@ import ShareCard from "./ShareCard.jsx"
 import ProfileInsights from "./ProfileInsights.jsx"
 import { CardBackSVG } from "./CardSVG.jsx"
 import { TRANSLATIONS, SPREADS, MAJOR_ARCANA, generateMinorArcana } from "./data.js"
+import { getUserId, canGenerateReading, consumeCredit } from "./credits.js"
+import PaywallModal from "./PaywallModal.jsx"
 
 const ALL_CARDS = [...MAJOR_ARCANA, ...generateMinorArcana()]
-
-function getDailyReadingSeed(baseSeed) {
-  const now = new Date()
-  const daySeed = Number(
-    `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
-  )
-
-  return (baseSeed * 31 + daySeed) % 2147483647
-}
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 const STATS_KEY = "arcana-mystica-stats-v2"
@@ -51,14 +44,63 @@ export default function App() {
   const [readingCards, setReadingCards] = useState([])
   const [showReading, setShowReading] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false);
   const [stats, setStats] = useState({ visits: 0, readings: 0 })
   const [birthData, setBirthData] = useState(null)
   const [visible, setVisible] = useState({ header: false, cards: false })
   const shuffleRef = useRef(null)
   const [shuffleTick, setShuffleTick] = useState(0)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const t = TRANSLATIONS[lang]
   const spreads = SPREADS[lang]
+
+  function getDailyReadingSeed(baseSeed) {
+  const now = new Date()
+  const daySeed = Number(
+    `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
+  )
+
+  return (baseSeed * 31 + daySeed) % 2147483647
+}
+
+async function handleReadingFlow() {
+  if (isGenerating) return;
+
+  setIsGenerating(true);
+
+  try {
+    const userId = getUserId();
+
+    const creditStatus = await canGenerateReading(userId);
+
+    if (!creditStatus.hasCredits) {
+      setShowReading(false); 
+      setShowPaywall(true);
+      return;
+    }
+
+    // Consumir crédito ANTES de mostrar
+    await consumeCredit(userId);
+
+    // Mostrar lectura
+    setReadingCards(dealtCards);
+    setShowReading(true);
+
+    const ns = { visits: stats.visits, readings: stats.readings + 1 };
+    setStats(ns);
+    await saveStats(ns);
+
+    await addDiaryEntry(dealtCards, selectedSpread, lang, birthData);
+
+  } catch (err) {
+    console.error("Reading flow error:", err);
+    alert("Ocurrió un error al generar la lectura");
+  } finally {
+    
+    setIsGenerating(false);
+  }
+}
 
   useEffect(() => {
     ; (async () => {
@@ -104,11 +146,8 @@ export default function App() {
     setRevealedIndexes(prev => {
       const next = [...new Set([...prev, idx])]
       if (next.length === dealtCards.length) {
-        setTimeout(async () => {
-          setReadingCards(dealtCards); setShowReading(true)
-          const ns = { visits: stats.visits, readings: stats.readings + 1 }
-          setStats(ns); await saveStats(ns)
-          await addDiaryEntry(dealtCards, selectedSpread, lang, birthData)
+        setTimeout( () => {
+          handleReadingFlow();
         }, 900)
       }
       return next
@@ -526,6 +565,9 @@ export default function App() {
       {showShare && (
         <ShareCard cards={readingCards} spread={selectedSpread} lang={lang} birthData={birthData} onClose={() => { setShowShare(false); reset() }} />
       )}
+      {showPaywall && (
+  <PaywallModal onClose={() => setShowPaywall(false)} />
+)}
     </div>
   )
 }
