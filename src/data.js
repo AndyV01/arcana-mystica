@@ -63,16 +63,16 @@ export const TRANSLATIONS = {
 // ─── Spread Definitions (bilingual) ──────────────────────────────────────────
 export const SPREADS = {
   en: [
-    { id: "single",  image: "public/img/unica.png",  name: "Single Card",            description: "One card for clarity",           count: 1,  positions: ["Your Message"] },
-    { id: "three", image: "public/img/tres.png",  name: "Past · Present · Future", description: "Time's three faces",             count: 3,  positions: ["Past", "Present", "Future"] },
-    { id: "celtic", image: "public/img/cruz.png", name: "Celtic Cross",            description: "The grand 10-card reading",      count: 10, positions: ["Present", "Challenge", "Past", "Future", "Above", "Below", "Self", "External", "Hopes & Fears", "Outcome"] },
-    { id: "love",  image: "public/img/love.png",  name: "Love Reading",            description: "Matters of the heart",           count: 5,  positions: ["You", "Them", "Connection", "Obstacle", "Outcome"] },
+    { id: "single",  image: "img/unica.png",  name: "Single Card",            description: "One card for clarity",           count: 1,  positions: ["Your Message"] },
+    { id: "three", image: "img/tres.png",  name: "Past · Present · Future", description: "Time's three faces",             count: 3,  positions: ["Past", "Present", "Future"] },
+    { id: "celtic", image: "img/cruz.png", name: "Celtic Cross",            description: "The grand 10-card reading",      count: 10, positions: ["Present", "Challenge", "Past", "Future", "Above", "Below", "Self", "External", "Hopes & Fears", "Outcome"] },
+    { id: "love",  image: "img/love.png",  name: "Love Reading",            description: "Matters of the heart",           count: 5,  positions: ["You", "Them", "Connection", "Obstacle", "Outcome"] },
   ],
   es: [
-    { id: "single", image: "public/img/unica.png", name: "Carta Única",             description: "Una carta para claridad",        count: 1,  positions: ["Tu Mensaje"] },
-    { id: "three",  image: "public/img/tres.png", name: "Pasado · Presente · Futuro", description: "Las tres caras del tiempo",  count: 3,  positions: ["Pasado", "Presente", "Futuro"] },
-    { id: "celtic", image: "public/img/cruz.png", name: "Cruz Celta",              description: "La gran lectura de 10 cartas",  count: 10, positions: ["Presente", "Desafío", "Pasado", "Futuro", "Encima", "Debajo", "Yo Mismo", "Externo", "Esperanzas y Miedos", "Resultado"] },
-    { id: "love",   image: "public/img/love.png", name: "Lectura de Amor",         description: "Asuntos del corazón",           count: 5,  positions: ["Tú", "La Otra Persona", "Conexión", "Obstáculo", "Resultado"] },
+    { id: "single", image: "img/unica.png", name: "Carta Única",             description: "Una carta para claridad",        count: 1,  positions: ["Tu Mensaje"] },
+    { id: "three",  image: "img/tres.png", name: "Pasado · Presente · Futuro", description: "Las tres caras del tiempo",  count: 3,  positions: ["Pasado", "Presente", "Futuro"] },
+    { id: "celtic", image: "img/cruz.png", name: "Cruz Celta",              description: "La gran lectura de 10 cartas",  count: 10, positions: ["Presente", "Desafío", "Pasado", "Futuro", "Encima", "Debajo", "Yo Mismo", "Externo", "Esperanzas y Miedos", "Resultado"] },
+    { id: "love",   image: "img/love.png", name: "Lectura de Amor",         description: "Asuntos del corazón",           count: 5,  positions: ["Tú", "La Otra Persona", "Conexión", "Obstáculo", "Resultado"] },
   ],
 }
 
