@@ -162,34 +162,34 @@ export default function App() {
     setDealtCards([]); setRevealedIndexes([]); setReadingCards([])
     setSelectedSpread(null); setBirthData(null)
   }
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-  const paymentStatus = params.get("payment");
-  const pack = params.get("pack");
+    const paymentStatus = params.get("payment");
+    const pack = params.get("pack");
 
-  const creditsMap = {
-    pack5: 5,
-    single: 1,
-  };
+    const creditsMap = {
+      pack5: 5,
+      single: 1,
+    };
 
-  const credits = creditsMap[pack] || 0;
+    const credits = creditsMap[pack] || 0;
 
-  if (paymentStatus === "success" && credits > 0 ) {
-    reloadCredits();
-    setShowPaywall(false);
+    if (paymentStatus === "success" && credits > 0) {
+      reloadCredits();
+      setShowPaywall(false);
 
-    // 🔥 ANIMACIÓN dinámica
-    setCreditAnimation(credits);
+      // ANIMACIÓN dinámica
+      setCreditAnimation(credits);
 
-    setTimeout(() => {
-      setCreditAnimation(null);
-    }, 2500);
+      setTimeout(() => {
+        setCreditAnimation(null);
+      }, 2500);
 
-    // limpiar URL
-    window.history.replaceState({}, document.title, "/");
-  }
-}, []);
+      // limpiar URL
+      window.history.replaceState({}, document.title, "/");
+    }
+  }, []);
 
   const tabLabels = {
     en: [{ id: "home", icon: "/img/tarot02.png", label: "Spreads" },
@@ -249,6 +249,11 @@ useEffect(() => {
     transform: translate(-50%, -90%) scale(0.9);
   }
 }
+  @media (max-width: 768px) {
+    .brand-container {
+      display: none !important;
+    }
+  }
     /* spread cards — paleta base */
     .spread-card{transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease!important;}
     .spread-card:hover{transform:translateY(-8px) scale(1.04)!important;box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 36px rgba(140,80,255,.35)!important;}
@@ -329,14 +334,11 @@ useEffect(() => {
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "10px 18px",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="brand-container" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <img
             src="./img/crystal_ball.png"
             alt="Arcana Mystica"
-            style={{
-              width: "18px", height: "18px",
-              animation: isHomeIdle ? "goldGlow 3s ease-in-out infinite" : "imageGlow 3s ease-in-out infinite"
-            }}
+            style={{ width: "18px", height: "18px", animation: isHomeIdle ? "goldGlow 3s ease-in-out infinite" : "imageGlow 3s ease-in-out infinite" }}
           />
           <span style={{
             fontSize: "12px", letterSpacing: "3px",
@@ -353,28 +355,23 @@ useEffect(() => {
               style={{
                 display: "flex", alignItems: "center", gap: "6px",
                 padding: "4px 12px",
-                background: "transparent",
-                border: isHomeIdle ? "1px solid rgba(200, 140, 20, 0.03)" : "1px solid rgba(141, 80, 255, 0.05)",
+                background: "linear-gradient(135deg, rgba(80,35,160,.2), rgba(40,15,80,.3))",
+                border: "1px solid rgba(140,80,255,.15)",
                 borderRadius: "20px", cursor: "default", transition: "all .3s"
               }}>
               <span style={{ fontSize: "12px" }}>{icon}</span>
               <div>
-                <div style={{
-                  fontSize: "13px", fontWeight: "bold",
-                  color: "#d4a8ff",
-                  fontFamily: "'Cinzel',serif", lineHeight: 1,
-                  transition: "color .5s"
-                }}>{val.toLocaleString()}</div>
-                <div style={{
-                  fontSize: "7px", letterSpacing: "1.5px",
-                  color: "rgb(180,140,255)",
-                  textTransform: "uppercase", transition: "color .5s"
-                }}>{label}</div>
+                <div style={{ fontSize: "13px", fontWeight: "bold", color: "#d4a8ff", fontFamily: "'Cinzel',serif", lineHeight: 1, transition: "color .5s" }}>
+                  {val.toLocaleString()}
+                </div>
+                <div style={{ fontSize: "7px", letterSpacing: "1.5px", color: "rgb(180,140,255)", textTransform: "uppercase", transition: "color .5s" }}>
+                  {label}
+                </div>
               </div>
             </div>
           ))}
           {credits && (
-            <div
+            <div className={isHomeIdle ? "stat-pill-gold" : "stat-pill"}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -389,27 +386,11 @@ useEffect(() => {
               <span style={{ fontSize: "12px" }}>
                 {credits.hasFree ? "✨" : "💎"}
               </span>
-
               <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "#d4b4ff",
-                    lineHeight: 1
-                  }}
-                >
+                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#d4b4ff", lineHeight: 1 }} >
                   {credits.hasFree ? "FREE" : credits.paidCredits}
                 </div>
-
-                <div
-                  style={{
-                    fontSize: "7px",
-                    letterSpacing: "1.5px",
-                    color: "rgb(180,140,255)",
-                    textTransform: "uppercase"
-                  }}
-                >
+                <div style={{ fontSize: "7px", letterSpacing: "1.5px", color: "rgb(180,140,255)", textTransform: "uppercase" }} >
                   {credits.hasFree ? "1 disponible" : "créditos"}
                 </div>
               </div>
@@ -418,15 +399,8 @@ useEffect(() => {
           <button
             className={isHomeIdle ? "lang-btn-gold" : "lang-btn"}
             onClick={() => setLang(l => l === "en" ? "es" : "en")}
-            style={{
-              padding: "5px 12px",
-              background: "rgba(255,255,255,.04)",
-              border: "1px solid rgba(180,140,255,.22)",
-              borderRadius: "20px",
-              color: "rgba(200,165,255,.6)",
-              fontSize: "10px", letterSpacing: "2px", cursor: "pointer",
-              fontFamily: "'Cinzel',serif", transition: "all .3s"
-            }}>
+            style={{ padding: "5px 12px", background: "rgba(255,255,255,.04)", border: "1px solid rgba(180,140,255,.22)", borderRadius: "20px", color: "rgba(200,165,255,.6)", fontSize: "10px", letterSpacing: "2px", cursor: "pointer", fontFamily: "'Cinzel',serif", transition: "all .3s" }}
+          >
             {t.langSwitch}
           </button>
         </div>
@@ -518,7 +492,18 @@ useEffect(() => {
                       borderRadius: "14px", cursor: "pointer",
                       backdropFilter: "blur(12px)"
                     }}>
-                    <div style={{ fontSize: "28px", marginBottom: "12px" }}>{["🃏", "🎴", "✨", "🌙"][i]}</div>
+                    <div>
+                      <img
+                        src={sp.image}
+                        alt={sp.name}
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          objectFit: "contain",
+                          filter: "drop-shadow(0 0 6px rgba(140,80,255,0.4))"
+                        }}
+                      />
+                    </div>
                     <div style={{
                       fontSize: "13px", letterSpacing: "1px",
                       color: "#d4b4ff",

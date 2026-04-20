@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     }
 
     const packs = {
-      pack5: { title: "5 Lecturas", price: 2, credits: 5 },
-      single: { title: "Lectura individual", price: 0.5, credits: 1 },
+      pack5: { title: "5 Lecturas", price: 1000, credits: 5 },
+      single: { title: "Lectura individual", price: 500, credits: 1 },
     };
 
     const selected = packs[pack];
