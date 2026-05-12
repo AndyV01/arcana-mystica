@@ -155,6 +155,7 @@ Cada ejecucion del pipeline queda trackeada en LangSmith con:
 - Diario de lecturas en `localStorage`.
 - Carta diaria y horoscopo semanal.
 - Tarjeta compartible para redes sociales.
+- Pasarela de pago integrada con Mercado Pago para compra de créditos (packs y lectura individual).
 
 ---
 
@@ -237,6 +238,8 @@ En Vercel (`Settings -> Environment Variables`):
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 - `DEMO_MODE`
+- `MP_ACCESS_TOKEN`
+- `APP_URL`
 
 Notas:
 
@@ -245,6 +248,24 @@ Notas:
 - Upstash Redis guarda hasta 50 lecturas por usuario usando `lpush` + `ltrim`.
 
 ---
+
+
+### Pasarela de pago (Mercado Pago)
+
+Se incorporó una pasarela de pago con **Mercado Pago Checkout** para monetizar lecturas adicionales mediante créditos.
+
+Flujo:
+
+1. El frontend solicita una preferencia con `POST /api/create-preference` enviando `userId` y `pack`.
+2. El backend crea la preferencia en Mercado Pago y devuelve `init_point` para redirigir al checkout.
+3. Mercado Pago notifica el pago en `/api/mp-webhook`.
+4. El webhook valida el pago `approved`, evita duplicados por `paymentId` y acredita créditos en Redis (`credits:paid:{userId}`).
+5. La app consume créditos con `/api/use-credit` y consulta saldo con `/api/check-credits`.
+
+Packs configurados actualmente:
+
+- `single`: 1 lectura
+- `pack5`: 5 lecturas
 
 ## Desarrollo local
 
@@ -286,6 +307,8 @@ Configurar en Vercel:
 - `UPSTASH_REDIS_REST_URL`: URL de tu base de datos en upstash.com
 - `UPSTASH_REDIS_REST_TOKEN`: token de tu base de datos en upstash.com
 - `DEMO_MODE`: `false` en produccion
+- `MP_ACCESS_TOKEN`: access token privado de Mercado Pago
+- `APP_URL`: URL pública de la app (usada para `success/failure/pending`)
 
 ---
 
