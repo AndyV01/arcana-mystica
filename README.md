@@ -288,16 +288,6 @@ Build de produccion:
 npm run build
 ```
 
----
-
-## Deploy
-
-```bash
-git add .
-git commit -m "feat: descripcion del cambio"
-git push
-```
-
 Configurar en Vercel:
 
 - `GROQ_API_KEY`: tu secret key de Groq (gratis en console.groq.com)
