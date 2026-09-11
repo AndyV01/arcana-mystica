@@ -155,6 +155,7 @@ Each pipeline execution is tracked in LangSmith with:
 - Reading history stored in `localStorage`.
 - Daily card and weekly horoscope.
 - Shareable card for social media.
+- Pasarela de pago integrada con Mercado Pago para compra de créditos (packs y lectura individual).
 
 ---
 
@@ -237,16 +238,36 @@ In Vercel (`Settings -> Environment Variables`):
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 - `DEMO_MODE`
+- `MP_ACCESS_TOKEN`
+- `APP_URL`
 
 Notes:
 
-- In local development, Vite exposes `/api/generate-reading` via middleware in `vite.config.js`.
-- LangSmith requires an explicit flush before the serverless function closes to ensure traces are properly finalized.
-- Upstash Redis stores up to 50 readings per user using `lpush` + `ltrim`.
+- En desarrollo local, Vite expone `/api/generate-reading` mediante middleware en `vite.config.js`.
+- LangSmith requiere flush explicito antes de cerrar la funcion serverless para que las trazas cierren correctamente.
+- Upstash Redis guarda hasta 50 lecturas por usuario usando `lpush` + `ltrim`.
 
 ---
 
-## Local development
+
+### Pasarela de pago (Mercado Pago)
+
+Se incorporó una pasarela de pago con **Mercado Pago Checkout** para monetizar lecturas adicionales mediante créditos.
+
+Flujo:
+
+1. El frontend solicita una preferencia con `POST /api/create-preference` enviando `userId` y `pack`.
+2. El backend crea la preferencia en Mercado Pago y devuelve `init_point` para redirigir al checkout.
+3. Mercado Pago notifica el pago en `/api/mp-webhook`.
+4. El webhook valida el pago `approved`, evita duplicados por `paymentId` y acredita créditos en Redis (`credits:paid:{userId}`).
+5. La app consume créditos con `/api/use-credit` y consulta saldo con `/api/check-credits`.
+
+Packs configurados actualmente:
+
+- `single`: 1 lectura
+- `pack5`: 5 lecturas
+
+## Desarrollo local
 
 ```bash
 git clone https://github.com/AndyV01/arcana-mystica.git
@@ -261,8 +282,11 @@ App local:
 http://localhost:5173
 ```
 
----
+Build de produccion:
 
+```bash
+npm run build
+```
 
 Configure in Vercel:
 
@@ -273,6 +297,8 @@ Configure in Vercel:
 - `UPSTASH_REDIS_REST_URL`: URL of your database on upstash.com
 - `UPSTASH_REDIS_REST_TOKEN`: token of your database on upstash.com
 - `DEMO_MODE`: `false` in production
+- `MP_ACCESS_TOKEN`: access token privado de Mercado Pago
+- `APP_URL`: URL pública de la app (usada para `success/failure/pending`)
 
 ---
 
