@@ -243,29 +243,29 @@ In Vercel (`Settings -> Environment Variables`):
 
 Notes:
 
-- En desarrollo local, Vite expone `/api/generate-reading` mediante middleware en `vite.config.js`.
-- LangSmith requiere flush explicito antes de cerrar la funcion serverless para que las trazas cierren correctamente.
-- Upstash Redis guarda hasta 50 lecturas por usuario usando `lpush` + `ltrim`.
+- In local development, Vite exposes `/api/generate-reading` via middleware in `vite.config.js`.
+- LangSmith requires an explicit flush before the serverless function closes to ensure traces are properly finalized.
+- Upstash Redis stores up to 50 readings per user using `lpush` + `ltrim`.
 
 ---
 
 
-### Pasarela de pago (Mercado Pago)
+### Payment Gateway (Mercado Pago)
 
-Se incorporó una pasarela de pago con **Mercado Pago Checkout** para monetizar lecturas adicionales mediante créditos.
+A payment gateway using **Mercado Pago Checkout** has been integrated to monetize additional readings via credits.
 
-Flujo:
+Flow:
 
-1. El frontend solicita una preferencia con `POST /api/create-preference` enviando `userId` y `pack`.
-2. El backend crea la preferencia en Mercado Pago y devuelve `init_point` para redirigir al checkout.
-3. Mercado Pago notifica el pago en `/api/mp-webhook`.
-4. El webhook valida el pago `approved`, evita duplicados por `paymentId` y acredita créditos en Redis (`credits:paid:{userId}`).
-5. La app consume créditos con `/api/use-credit` y consulta saldo con `/api/check-credits`.
+1. The frontend requests a preference via `POST /api/create-preference`, sending the `userId` and `pack`.
+2. The backend creates the preference in Mercado Pago and returns the `init_point` to redirect to the checkout.
+3. Mercado Pago notifies the payment at `/api/mp-webhook`.
+4. The webhook validates the `approved` payment, prevents duplicates using the `paymentId`, and credits the user's account in Redis (`credits:paid:{userId}`).
+5. The app consumes credits via `/api/use-credit` and checks the balance via `/api/check-credits`.
 
-Packs configurados actualmente:
+Currently configured packs:
 
-- `single`: 1 lectura
-- `pack5`: 5 lecturas
+- `single`: 1 reading
+- `pack5`: 5 readings
 
 ## Desarrollo local
 
@@ -274,18 +274,6 @@ git clone https://github.com/AndyV01/arcana-mystica.git
 cd arcana-mystica
 npm install
 npm run dev
-```
-
-App local:
-
-```bash
-http://localhost:5173
-```
-
-Build de produccion:
-
-```bash
-npm run build
 ```
 
 Configure in Vercel:
