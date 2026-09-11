@@ -4,7 +4,7 @@ import { getLifePathMeaning } from "./BirthDateModal.jsx"
 import { loadProfile, saveProfile } from "./profile.store.js"
 
 export default function ReadingPanel({ cards, spread, onClose, lang, t, birthData, onShare }) {
-  //agrego estados de IA 
+  
   const [aiReading, setAiReading] = useState(null)
   const [loadingAI, setLoadingAI] = useState(false)
   const [profileSummary, setProfileSummary] = useState("")

@@ -83,10 +83,10 @@ export default function App() {
         return;
       }
 
-      // Consumir crédito ANTES de mostrar
+      // Consume credit BEFORE showing
       await consumeCredit(userId);
       reloadCredits();
-      // Mostrar lectura
+      // Show reading
       setReadingCards(dealtCards);
       setShowReading(true);
 
@@ -98,7 +98,7 @@ export default function App() {
 
     } catch (err) {
       console.error("Reading flow error:", err);
-      alert("Ocurrió un error al generar la lectura");
+      alert("An error occurred while generating the reading.");
     } finally {
 
       setIsGenerating(false);
@@ -179,14 +179,14 @@ export default function App() {
       reloadCredits();
       setShowPaywall(false);
 
-      // ANIMACIÓN dinámica
+      // Dynamic animation
       setCreditAnimation(credits);
 
       setTimeout(() => {
         setCreditAnimation(null);
       }, 2500);
 
-      // limpiar URL
+      // clear URL
       window.history.replaceState({}, document.title, "/");
     }
   }, []);
@@ -291,7 +291,7 @@ export default function App() {
     }}>
       <style>{CSS}</style>
 
-      {/* VIDEO FONDO */}
+      {/* VIDEO BACKGROUND */}
       {isHomeIdle && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -316,12 +316,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Orbs — solo en pantallas no-home */}
+      {/* Orbs — non-Home screens only */}
       {!isHomeIdle && [["18%", "8%", "360px", "rgba(80,30,220,.07)", "4s"], ["78%", "55%", "440px", "rgba(130,20,170,.055)", "5.5s"], ["48%", "88%", "280px", "rgba(50,100,220,.065)", "3.5s"]].map(([l, t2, s, c, d], i) => (
         <div key={i} style={{ position: "fixed", left: l, top: t2, width: s, height: s, borderRadius: "50%", background: c, filter: "blur(90px)", animation: `orbPulse ${d} ease-in-out infinite`, animationDelay: `${i * 1.3}s`, pointerEvents: "none", zIndex: 1 }} />
       ))}
 
-      {/* Orbs dorados — solo home */}
+      {/* Golden orbs — Solo Home */}
       {isHomeIdle && [["10%", "20%", "300px", "rgba(180,100,10,.08)", "4s"], ["75%", "60%", "380px", "rgba(160,80,5,.06)", "5.5s"]].map(([l, t2, s, c, d], i) => (
         <div key={i} style={{ position: "fixed", left: l, top: t2, width: s, height: s, borderRadius: "50%", background: c, filter: "blur(90px)", animation: `orbPulse ${d} ease-in-out infinite`, animationDelay: `${i * 1.5}s`, pointerEvents: "none", zIndex: 1 }} />
       ))}

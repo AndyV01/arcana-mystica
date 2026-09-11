@@ -1,9 +1,9 @@
 /**
- * Lógica de negocio para créditos de lecturas.
- * Maneja verificación y consumo de créditos via API.
+ * Business logic for reading credits.
+ * Handles credit verification and consumption via API.
  */
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// ─── API 
 
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, {
@@ -21,10 +21,10 @@ async function apiFetch(path, options = {}) {
   return res.json();
 }
 
-// ─── Credit Operations ───────────────────────────────────────────────────────
+// ─── Credit Operations 
 
 /**
- * Verifica créditos del usuario
+ * Verify user credits
  */
 export async function checkCredits(userId) {
   try {
@@ -36,7 +36,7 @@ export async function checkCredits(userId) {
 }
 
 /**
- * Consume un crédito (free o pago)
+ * Consume a credit (free or paid)
  */
 export async function consumeCredit(userId) {
   return apiFetch("/api/use-credit", {
@@ -45,7 +45,7 @@ export async function consumeCredit(userId) {
   });
 }
 
-// ─── Aliases (compatibilidad) ────────────────────────────────────────────────
+// ─── Aliases (compatibility) ────────────────────────────────────────────────
 
 export const canGenerateReading = checkCredits;
 export const useCredit = consumeCredit;

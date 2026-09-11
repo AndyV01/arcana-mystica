@@ -35,9 +35,9 @@ export async function hookAgent({
 
   try {
     const prompt = `
-Eres un agente de retencion para una app de tarot.
+You are a retention agent for a tarot app.
 
-Devuelve SOLO JSON valido con esta forma:
+Return ONLY valid JSON in this format:
 {
   "title": "string",
   "message": "string",
@@ -45,14 +45,14 @@ Devuelve SOLO JSON valido con esta forma:
   "spreadId": "single|three|celtic|love"
 }
 
-Objetivo:
-- Sugerir la siguiente accion mas atractiva para que el usuario vuelva a interactuar.
-- Basate en su perfil y en la lectura actual.
-- El tono debe ser mistico pero concreto.
-- No uses lenguaje fatalista ni manipulador.
-- Idioma: ${lang === "es" ? "espanol" : "english"}.
+Objective:
+- Suggest the most compelling next action to re-engage the user.
+- Base this on their profile and the current reading.
+- The tone should be mystical yet concrete.
+- Do not use fatalistic or manipulative language.
+- Language: ${lang === "es" ? "espanol" : "english"}.
 
-Perfil:
+Profile:
 ${JSON.stringify({
       readingCount: profile.readingCount,
       profileSummary: profile.profileSummary,
@@ -62,7 +62,7 @@ ${JSON.stringify({
       lastReadingPreview: profile.lastReadingPreview
     })}
 
-Lectura actual:
+Current Reading:
 ${JSON.stringify({
       spreadId: spread?.id ?? null,
       spreadName: spread?.name ?? null

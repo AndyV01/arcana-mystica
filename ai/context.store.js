@@ -1,23 +1,23 @@
 // ai/context.store.js
 
 export class AgentContext {
-  // Inicializa el contexto compartido con un estado opcional.
+  // Initializes the shared context with an optional state.
   constructor(initialState = {}) {
-    // Objeto interno donde se guardan pares clave/valor del contexto.
+    // Internal object where context key-value pairs are stored.
     this.state = { ...initialState }
   }
 
-  // Actualiza o crea una clave dentro del estado actual.
+  // Updates or creates a key within the current state.
   update(key, value) {
     this.state[key] = value
   }
 
-  // Devuelve el valor asociado a una clave específica.
+  // Returns the value associated with a specific key.
   get(key) {
     return this.state[key]
   }
 
-  // Retorna todo el estado acumulado del contexto.
+  // Returns the entire accumulated state of the context.
   getAll() {
     return this.state
   }

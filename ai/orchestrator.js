@@ -12,7 +12,7 @@ import { traceable } from "langsmith/traceable"
 import { ragAgent, saveReading } from "./agents/rag.agent.js"
 
 // ---------------------------------------------------------------------------
-// Cada nodo recibe el estado completo y retorna solo lo que cambia
+// Each node receives the full state and returns only what changes.
 // ---------------------------------------------------------------------------
 const TarotState = Annotation.Root({
   // inputs
@@ -158,12 +158,12 @@ async function nodoMemoryFinalize(state) {
 
     try {
       const prompt = `
-Eres un agente de memoria para una app de tarot.
+You are a memory agent for a tarot app.
 
-Resume el perfil del usuario en una sola frase, sin markdown, en ${state.lang === "es" ? "espanol" : "english"}.
-Debe sonar observacional, no fatalista.
+Summarize the user profile in a single sentence, without markdown, in ${state.lang === "es" ? "espanol" : "english"}.
+It should sound observational, not fatalistic.
 
-Perfil estructurado:
+Structured profile:
 ${JSON.stringify({
         readingCount: baseProfile.readingCount,
         preferredLanguage: baseProfile.preferredLanguage,
@@ -173,7 +173,7 @@ ${JSON.stringify({
         birthProfile: baseProfile.birthProfile
       })}
 
-Sesion actual:
+Current session:
 ${JSON.stringify({
         cards: cards.map(card => ({
           name: card.name,
@@ -234,7 +234,7 @@ async function nodoError(state) {
 }
 
 // ---------------------------------------------------------------------------
-// Edges condicionales
+// Conditional edges
 // ---------------------------------------------------------------------------
 
 function decidirTrasMemoryInit(state) {
@@ -296,7 +296,7 @@ grafo.addEdge("pipeline_error", END)
 
 export const graph = grafo.compile({ checkpointer: undefined })
 
-// Función pública con tracing LangSmith
+// Public function with LangSmith tracing
 export const runMultiAgentSystem = traceable(
   async function runMultiAgentSystem({
     objective,

@@ -45,12 +45,12 @@ export async function memoryAgent({
 
   try {
     const prompt = `
-Eres un agente de memoria para una app de tarot.
+You are a memory agent for a tarot app.
 
-Resume el perfil del usuario en una sola frase, sin markdown, en ${lang === "es" ? "espanol" : "english"}.
-Debe sonar observacional, no fatalista.
+Summarize the user profile in a single sentence, without markdown, in ${lang === "es" ? "Spanish" : "English"}.
+It should sound observational, not fatalistic.
 
-Perfil estructurado:
+Structured profile:
 ${JSON.stringify({
       readingCount: baseProfile.readingCount,
       preferredLanguage: baseProfile.preferredLanguage,
@@ -60,7 +60,7 @@ ${JSON.stringify({
       birthProfile: baseProfile.birthProfile
     })}
 
-Sesion actual:
+Current Session:
 ${JSON.stringify({
       cards: cards.map(card => ({
         name: card.name,

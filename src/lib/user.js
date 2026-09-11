@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 
 /**
- * Obtiene o genera un ID único persistente para el usuario.
- * Se almacena en localStorage para mantener la identidad entre sesiones.
+ * Obtains or generates a unique, persistent user ID.
+ * It is stored in localStorage to maintain identity across sessions.
  */
 export function getUserId() {
   let id = localStorage.getItem("arcana_user_id");

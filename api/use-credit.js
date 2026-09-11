@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing userId" });
   }
 
-  // Fallback DEV (igual que en check-credits)
+  // Fallback DEV (same as check-credits)
   if (!redis) {
     return res.status(200).json({ used: "free" });
   }
@@ -26,13 +26,13 @@ export default async function handler(req, res) {
 
     const freeUsed = await redis.get(freeKey);
 
-    // Caso 1: usar free del día
+    //Case 1: Use the day's free option.
     if (freeUsed === null) {
       await redis.set(freeKey, 1, { ex: 60 * 60 * 24 });
       return res.status(200).json({ used: "free" });
     }
 
-    // Caso 2: usar créditos pagos
+    //Case 2: Use paid credits
     const paidCredits = await redis.get(paidKey);
 
     if ((paidCredits || 0) > 0) {
@@ -40,13 +40,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ used: "paid" });
     }
 
-    // Caso 3: sin créditos
+    //Case 3: No credits available
     return res.status(403).json({ error: "No credits available" });
 
   } catch (error) {
     console.error("Redis error:", error);
 
-    // fallback seguro (no romper UX)
+    // Safe fallback (do not break UX)
     return res.status(200).json({ used: "free" });
   }
 }

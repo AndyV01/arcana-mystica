@@ -5,7 +5,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN
 })
 
-// Convierte cartas en un vector simple basado en keywords
+// Converts letters into a simple vector based on keywords.
 function cardsToVector(cardData, lang = "es") {
   const keywords = cardData.flatMap(item => {
     const card = item.card ?? item
@@ -20,7 +20,7 @@ function cardsToVector(cardData, lang = "es") {
   return [...new Set(keywords)]
 }
 
-// Similitud entre dos vectores (Jaccard)
+// Similarity between two vectors (Jaccard)
 function similarity(vecA, vecB) {
   const setA = new Set(vecA)
   const setB = new Set(vecB)
@@ -29,7 +29,7 @@ function similarity(vecA, vecB) {
   return union === 0 ? 0 : intersection / union
 }
 
-// Guarda una lectura en Redis
+// Save a reading to Redis.
 export async function saveReading({ userId, cardData, reading, spread, lang }) {
   const key = `readings:${userId}`
   const entry = {
@@ -42,10 +42,10 @@ export async function saveReading({ userId, cardData, reading, spread, lang }) {
   }
 
   await redis.lpush(key, JSON.stringify(entry))
-  await redis.ltrim(key, 0, 49) // máximo 50 lecturas por usuario
+  await redis.ltrim(key, 0, 49) // maximum of 50 reads per user
 }
 
-// Recupera lecturas similares a las cartas actuales
+// Retrieve similar readings to the current cards
 export async function ragAgent({ userId, cardData, lang = "es", topK = 3 }) {
   try {
     const key = `readings:${userId}`

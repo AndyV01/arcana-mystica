@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 function apiDevPlugin() {
-  // cache por handler (mejora performance en dev)
+  // Per-handler caching (improves performance in dev)
   const handlers = {}
 
   async function getHandler(path) {

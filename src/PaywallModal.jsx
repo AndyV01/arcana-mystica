@@ -57,7 +57,7 @@ export default function PaywallModal({ onClose }) {
           Puedes continuar ahora con nuevas interpretaciones más profundas.
         </p>
 
-        {/* OPCIONES (clave para conversión) */}
+        {/* OPTIONS (conversion key) */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
 
           <button

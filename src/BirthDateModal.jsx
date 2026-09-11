@@ -159,7 +159,7 @@ export default function BirthDateModal({ lang, spreadName, onConfirm, onSkip }) 
         .num-card { transition: all 0.5s cubic-bezier(.34,1.56,.64,1); }
       `}</style>
 
-      {/* VIDEO de fondo — cubre todo el modal */}
+      {/* Background VIDEO — covers the entire modal */}
       <video autoPlay loop muted playsInline style={{
         position: "absolute", inset: 0,
         width: "100%", height: "100%",
@@ -171,13 +171,13 @@ export default function BirthDateModal({ lang, spreadName, onConfirm, onSkip }) 
         <source src="/img/fondo.mp4" type="video/mp4" />
       </video>
 
-      {/* OVERLAY — tapa todo lo que hay detrás del modal */}
+      {/* OVERLAY — covers everything behind the modal */}
       <div style={{
         position: "absolute", inset: 0, zIndex: 1,
         background: "rgba(4,1,14,0.72)"
       }} />
 
-      {/* CARD del modal — encima del video y el overlay */}
+      {/* Modal card — on top of the video and the overlay */}
       <div style={{
         position: "relative", zIndex: 2,
         maxWidth: "480px", width: "100%",

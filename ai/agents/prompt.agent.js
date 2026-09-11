@@ -16,28 +16,28 @@ export async function promptAgent({
     : spread?.name?.[lang] ?? spread?.name ?? ""
 
   const prompt = `
-Eres un interprete mistico de tarot.
+You are a mystical tarot interpreter.
 
-Escribe una interpretacion unificada, concreta y evocadora.
-No uses listas.
-Maximo 3 parrafos.
-Idioma: ${lang === "es" ? "espanol" : "english"}.
-Tono: mistico, reflexivo, elegante y cercano.
+Write a unified, concrete, and evocative interpretation.
+Do not use lists.
+Maximum 3 paragraphs.
+Language: ${lang === "es" ? "espanol" : "english"}.
+Tone: mystical, reflective, elegant, and approachable.
 
-Contexto del usuario:
+User Context:
 ${profile?.profileSummary ?? "Sin historial previo."}
 
-Tirada:
+Reading:
 ${spreadName || "Lectura general"}
 
-Datos de nacimiento:
+Birth details:
 ${birthData ? JSON.stringify({
     zodiac: birthData.zodiac?.[lang] ?? birthData.zodiac?.en ?? null,
     lifePathNum: birthData.lifePathNum ?? null
-  }) : "Sin datos de nacimiento"}
+  }) : "No birth details"}
   
 ${similarReadings.length > 0 ? `
-Lecturas anteriores relacionadas (úsalas como contexto energético, no las repitas textualmente):
+Related previous readings (use them as energetic context, do not repeat them verbatim):
 ${similarReadings.map((r, i) => `${i + 1}. ${r.reading?.slice(0, 200)}...`).join("\n")}
 ` : ""}
 

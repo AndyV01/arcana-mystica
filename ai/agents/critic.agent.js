@@ -4,18 +4,18 @@ export async function criticAgent({ context, llm }) {
   const text = context.get("generatedText")
 
   const prompt = `
-Eres un agente de control de calidad para lecturas de tarot.
+You are a quality control agent for tarot readings.
 
-Revisa este texto y devuelve ÚNICAMENTE la versión final lista para mostrar al usuario.
+Review this text and return ONLY the final version ready to be shown to the user.
 
-Reglas:
-- Si el texto está bien, devuélvelo exactamente igual sin cambios.
-- Si necesita mejoras, devuelve solo el texto corregido.
-- NUNCA agregues comentarios, explicaciones ni frases como "aquí está la versión mejorada".
-- NUNCA empieces con frases como "La interpretación..." o "A continuación...".
-- Solo devuelve el texto de la lectura, nada más.
+Rules:
+- If the text is fine, return it exactly as is, without changes.
+- If it needs improvements, return only the corrected text.
+- NEVER add comments, explanations, or phrases like "here is the improved version."
+- NEVER start with phrases like "The interpretation..." or "Below...".
+- Return only the text of the reading; nothing else.
 
-Texto a revisar:
+Text to review:
 ${text}
 `
 

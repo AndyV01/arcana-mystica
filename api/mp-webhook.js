@@ -6,14 +6,14 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
 
-    // validar tipo
+    // validate type
     if (!body || body.type !== "payment") {
       return res.status(200).send("ignored");
     }
 
     const paymentId = body.data.id;
 
-    // traer info real del pago
+    // fetch real payment info
     const response = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     const payment = await response.json();
 
-    // validar que esté aprobado
+    // validate that it's approved
     if (payment.status !== "approved") {
       return res.status(200).send("not approved");
     }
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
     const key = `credits:paid:${userId}`;
 
-    //  evitar duplicados (CLAVE)
+    //  avoid duplicates (KEY)
     const alreadyProcessed = await redis.get(`payment:${paymentId}`);
     if (alreadyProcessed) {
       return res.status(200).send("already processed");
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
     await redis.set(key, current + credits);
 
-    // marcar pago como procesado
+    // mark payment as processed
     await redis.set(`payment:${paymentId}`, 1);
 
     console.log("✅ Créditos acreditados:", credits);
