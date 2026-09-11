@@ -14,10 +14,11 @@ const groq = useMock
 async function llm(prompt) {
   try {
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 400
+      max_completion_tokens: 1500
     })
+    
     return response.choices[0]?.message?.content ?? ""
   } catch (error) {
     const groqError = new Error(`Groq API error: ${error.message}`)

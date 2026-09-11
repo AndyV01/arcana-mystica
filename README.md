@@ -44,7 +44,7 @@ Serverless function (api/generate-reading.js)
    |       ↓
         pipeline_error → END (if any node fails)
    |
-   +--> Groq API (llama-3.3-70b-versatile)
+   +--> Groq API (openai/gpt-oss-120b)
    |
    +--> Upstash Redis (reading history by user)
    |
@@ -202,7 +202,7 @@ arcana-mystica/
 | Vite 5 | Dev server and build pipeline |
 | LangGraph JS | Multi-agent orchestration with StateGraph |
 | LangSmith | Pipeline observability, tracing, and monitoring |
-| Groq API | LLM generation with `llama-3.3-70b-versatile` (free) |
+| Groq API | LLM generation with `openai/gpt-oss-120b` (free) |
 | Upstash Redis | User reading history (serverless, free) |
 | Vercel Serverless | API endpoint deployment |
 | Node.js | Agent runtime and API layer |
@@ -284,7 +284,7 @@ Configure in Vercel:
 - **Real RAG** ​​— semantic retrieval of past readings from Upstash Redis to provide context for the LLM.
 - **Jaccard similarity** — similarity calculation between keyword vectors without external embedding dependencies.
 - **Full observability** with LangSmith — tracing by node, token usage, latency, and error metadata in both local and production environments.
-- **Free LLM** using the Groq API (llama-3.3-70b-versatile) in production.
+- **Free LLM** using the Groq API (openai/gpt-oss-120b) in production.
 - **Serverless persistence** with Upstash Redis — user reading history without a traditional database.
 - **Persistent profile memory** driven by reading history.
 - **Retention-focused design** via a "hook agent" and suggested follow-up actions.

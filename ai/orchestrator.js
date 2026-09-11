@@ -327,7 +327,7 @@ export const runMultiAgentSystem = traceable(
       if (result.error) {
         return { success: false, error: result.error }
       }
-
+console.log("GENERATED TEXT FINAL:", result.generatedText)
       return { success: true, data: result }
 
     } catch (err) {
